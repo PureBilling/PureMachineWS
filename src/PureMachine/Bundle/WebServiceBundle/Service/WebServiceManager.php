@@ -11,14 +11,14 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 use PureMachine\Bundle\WebServiceBundle\Service\Annotation as PM;
-use PureMachine\Bundle\WebServiceBundle\WebService\BaseWebService;
 use PureMachine\Bundle\WebServiceBundle\Exception\WebServiceException;
 use PureMachine\Bundle\SDKBundle\Exception\Exception;
 use PureMachine\Bundle\SDKBundle\Service\WebServiceClient;
 use PureMachine\Bundle\SDKBundle\Store\Base\StoreHelper;
+use PureMachine\Bundle\WebServiceBundle\WebService\BaseWebService;
 
 /**
- * @Service("pure_machine.sdk.web_service_manager")
+ * @Service("pureMachine.sdk.webServiceManager")
  */
 class WebServiceManager extends WebServiceClient implements ContainerAwareInterface
 {
@@ -62,8 +62,9 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
      * @param string Symfony service id
      * @param \PureMachine\Bundle\WebServiceBundle\WebService\BaseWebService $object
      */
-    public function addService($serviceId, BaseWebService $object)
+    public function addService($serviceId, $object)
     {
+        if (!$object instanceof BaseWebService) return;
         if (!$serviceId) return;
 
         $rClass = new \ReflectionClass(get_class($object));
@@ -77,6 +78,14 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
         else $nsAnnotation = '';
 
         foreach ($methods as $method) {
+            /*
+             * If the method has no Webservice annotation , exclude it from
+             * the addService building
+             */
+            $webserviceAnnotationsClass = 'PureMachine\Bundle\WebServiceBundle\Service\Annotation\WebService';
+            $wsAnnotations = $ar->getMethodAnnotation($method, $webserviceAnnotationsClass);
+            if(is_null($wsAnnotations)) continue;
+
             //Lookup the namespace
             $nsAnnotation = $ar->getMethodAnnotation($method, $daClass);
             if ($nsAnnotation) $namespace = $nsAnnotation->value;
@@ -97,8 +106,6 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
                 if ($annotation instanceof PM\WebService) {
                     $name = $namespace . "/" . $annotation->value;
                     $version = $annotation->version;
-
-                    $definition['name'] = $name;
                     $definition['accessLevel'] = static::ACCESS_LEVEL_PRIVATE;
                     $internal['id'] = $serviceId;
                     $internal['method'] = $method->getName();
@@ -117,11 +124,12 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
                                               WebServiceException::WS_006);
 
             if ($name && $version) {
-                $name = strtolower($name);
-                $this->webServices[$name] = array();
-                $this->webServices[$name][$version] = array();
-                $this->webServices[$name][$version]['definition'] = $definition;
-                $this->webServices[$name][$version]['_internal'] = $internal;
+                $key = strtolower($name);
+                $this->webServices[$key] = array();
+                $this->webServices[$key]['name'] = $name;
+                $this->webServices[$key][$version] = array();
+                $this->webServices[$key][$version]['definition'] = $definition;
+                $this->webServices[$key][$version]['_internal'] = $internal;
             }
         }
     }
@@ -130,6 +138,7 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
                           $version=PM\WebService::DEFAULT_VERSION)
     {
         $inputData = $this->RequestToInputParams($request);
+
         $response = $this->localCall($webServiceName, $inputData, $version);
         $response->setLocal(false);
 
@@ -163,6 +172,8 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
             if ($inputValues) return $inputValues;
         }
 
+        if (count($parameters) == 0) return null;
+
         return (object) $parameters;
     }
 
@@ -175,11 +186,16 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
             return $this->buildErrorResponse($webServiceName, $version, $e);
         }
 
+        //Handle special mapping :
+        //Simple type are mapped to Store classes
+        $inputData = StoreHelper::simpleTypeToStore($inputData);
+        
         //Cast $inputValue if needed
         try {
             $classNames = $schema['definition']['inputClass'];
             $inputData = StoreHelper::unSerialize($inputData, $classNames,
-                                                  $this->getAnnotationReader());
+                                                  $this->getAnnotationReader(),
+                                                  $this->getContainer());
         } catch (Exception $e) {
             return $this->buildErrorResponse($webServiceName, $version, $e);
         }

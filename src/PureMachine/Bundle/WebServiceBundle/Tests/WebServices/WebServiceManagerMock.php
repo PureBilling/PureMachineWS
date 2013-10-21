@@ -16,14 +16,14 @@ class WebServiceManagerMock extends WebServiceClient
     {
         $this->callType = $callType;
         parent::setContainer($container);
-        $manager = $container->get('pure_machine.sdk.web_service_manager');
+        $manager = $container->get('pureMachine.sdk.webServiceManager');
         $this->webServices = $manager->getSchemas();
     }
 
     public function call($webServiceName, $inputData=null,
                               $version=PM\WebService::DEFAULT_VERSION)
     {
-        $manager = $this->getContainer()->get('pure_machine.sdk.web_service_manager');
+        $manager = $this->getContainer()->get('pureMachine.sdk.webServiceManager');
         $client = $this->getContainer()->get('pure_machine.sdk.web_service_client');
 
         switch ($this->callType) {

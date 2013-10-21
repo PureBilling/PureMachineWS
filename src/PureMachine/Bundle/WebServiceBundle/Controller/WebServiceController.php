@@ -18,7 +18,7 @@ class WebServiceController extends Controller
     public function webServiceAction(Request $request, $version, $name)
     {
        return $this->container
-                   ->get('pure_machine.sdk.web_service_manager')
+                   ->get('pureMachine.sdk.webServiceManager')
                    ->route($request, $name, $version);
     }
 }

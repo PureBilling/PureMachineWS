@@ -10,11 +10,11 @@ class WebServiceCompilerPass implements CompilerPassInterface
 {
     public function process(ContainerBuilder $container)
     {
-        if (!$container->hasDefinition('pure_machine.sdk.web_service_manager')) {
+        if (!$container->hasDefinition('pureMachine.sdk.webServiceManager')) {
             return;
         }
 
-        $definition = $container->getDefinition('pure_machine.sdk.web_service_manager');
+        $definition = $container->getDefinition('pureMachine.sdk.webServiceManager');
 
         $taggedServices = $container->findTaggedServiceIds('puremachine.webservice');
 
