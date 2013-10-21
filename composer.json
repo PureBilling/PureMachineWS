@@ -1,0 +1,15 @@
+{
+    "name": "puremachine/ws",
+    "type": "library",
+    "license": "MIT",
+    "description": "PureMachine SDK",
+    "keywords": ["framework"],
+    "autoload": {
+        "psr-0": { "PureMachine": "src/" }
+    },
+    "require": {
+        "php": ">=5.3.3",
+        "jms/di-extra-bundle": "1.4.*"
+    }
+}
+

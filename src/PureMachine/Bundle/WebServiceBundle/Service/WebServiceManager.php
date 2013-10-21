@@ -1,0 +1,236 @@
+<?php
+namespace PureMachine\Bundle\WebServiceBundle\Service;
+
+use JMS\DiExtraBundle\Annotation\Service;
+use JMS\DiExtraBundle\Annotation\Inject;
+use JMS\DiExtraBundle\Annotation\InjectParams;
+
+use Symfony\Component\DependencyInjection\ContainerAwareInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+
+use PureMachine\Bundle\WebServiceBundle\Service\Annotation as PM;
+use PureMachine\Bundle\WebServiceBundle\WebService\BaseWebService;
+use PureMachine\Bundle\WebServiceBundle\Exception\WebServiceException;
+use PureMachine\Bundle\SDKBundle\Exception\Exception;
+use PureMachine\Bundle\SDKBundle\Service\WebServiceClient;
+use PureMachine\Bundle\SDKBundle\Store\Base\StoreHelper;
+
+/**
+ * @Service("pure_machine.sdk.web_service_manager")
+ */
+class WebServiceManager extends WebServiceClient implements ContainerAwareInterface
+{
+    const ACCESS_LEVEL_PUBLIC = 'public';
+    const ACCESS_LEVEL_PRIVATE = 'private';
+
+    protected $webServices = null;
+
+    public function __construct()
+    {
+        $this->webServices = array();
+    }
+
+    /**
+     * @InjectParams({
+     *     "container" = @Inject("service_container")
+     * })
+     */
+    public function setContainer(ContainerInterface $container = null)
+    {
+        $this->container = $container;
+    }
+
+    public function getSchema($ws)
+    {
+        if (array_key_exists(strtolower($ws), $this->webServices))
+
+            return $this->webServices[strtolower($ws)];
+
+        return null;
+    }
+
+    public function getSchemas()
+    {
+        return $this->webServices;
+    }
+
+    /**
+     * Add a service instance that contains webServices
+     *
+     * @param string Symfony service id
+     * @param \PureMachine\Bundle\WebServiceBundle\WebService\BaseWebService $object
+     */
+    public function addService($serviceId, BaseWebService $object)
+    {
+        if (!$serviceId) return;
+
+        $rClass = new \ReflectionClass(get_class($object));
+        $methods = $rClass->getMethods(\ReflectionMethod::IS_PUBLIC);
+        $ar = $this->getAnnotationReader();
+
+        //Find the default namespace
+        $daClass = 'PureMachine\Bundle\WebServiceBundle\Service\Annotation\WSNamespace';
+        $nsAnnotation = $ar->getClassAnnotation($rClass, $daClass);
+        if ($nsAnnotation) $defaultNamespace = $nsAnnotation->value;
+        else $nsAnnotation = '';
+
+        foreach ($methods as $method) {
+            //Lookup the namespace
+            $nsAnnotation = $ar->getMethodAnnotation($method, $daClass);
+            if ($nsAnnotation) $namespace = $nsAnnotation->value;
+            else $namespace = $defaultNamespace;
+
+            $annotations = $ar->getMethodAnnotations($method);
+            $definition = array();
+            $definition['inputType'] = 'object';
+            $definition['inputClass'] = array();
+            $definition['returnType'] = 'object';
+            $definition['returnClass'] = array();
+            $internal = array();
+            $name = null;
+            $version = null;
+
+            foreach ($annotations as $annotation) {
+
+                if ($annotation instanceof PM\WebService) {
+                    $name = $namespace . "/" . $annotation->value;
+                    $version = $annotation->version;
+
+                    $definition['name'] = $name;
+                    $definition['accessLevel'] = static::ACCESS_LEVEL_PRIVATE;
+                    $internal['id'] = $serviceId;
+                    $internal['method'] = $method->getName();
+                } elseif ($annotation instanceof PM\ReturnClass) {
+                    $definition['returnClass'] = $annotation->getValue();
+                    if ($annotation->isArray) $definition['returnType'] = 'array';
+                } elseif ($annotation instanceof PM\InputClass) {
+                    $definition['inputClass'] = $annotation->getValue();
+                    if ($annotation->isArray) $definition['inputType'] = 'array';
+                }
+            }
+
+            if (count($definition['returnClass']) == 0)
+                throw new WebServiceException("A store class must be defined in returnClass "
+                                             ."annotation",
+                                              WebServiceException::WS_006);
+
+            if ($name && $version) {
+                $name = strtolower($name);
+                $this->webServices[$name] = array();
+                $this->webServices[$name][$version] = array();
+                $this->webServices[$name][$version]['definition'] = $definition;
+                $this->webServices[$name][$version]['_internal'] = $internal;
+            }
+        }
+    }
+
+    public function route(Request $request, $webServiceName,
+                          $version=PM\WebService::DEFAULT_VERSION)
+    {
+        $inputData = $this->RequestToInputParams($request);
+        $response = $this->localCall($webServiceName, $inputData, $version);
+        $response->setLocal(false);
+
+        //Serialize output data.
+        try {
+            $response = StoreHelper::serialize($response);
+        } catch (Exception $e) {
+                $response = $this->buildErrorResponse($webServiceName, $version, $e, true);
+        }
+
+        $symfonyResponse = new Response();
+
+        if ($response->status == 'error' &&
+            $response->answer->code == WebServiceException::WS_002)
+            $symfonyResponse->setStatusCode(404);
+
+        $symfonyResponse->headers->set('Content-Type', 'application/json; charset=utf-8');
+        $symfonyResponse->setContent(json_encode($response));
+
+        return $symfonyResponse;
+    }
+
+    private function RequestToInputParams(Request $request)
+    {
+        //We get parameters from POST or get
+        $parameters = array_merge($request->query->all(), $request->request->all());
+
+        //first, we check if we are a object in JSON inside the parameter
+        if (array_key_exists('json', $parameters)) {
+            $inputValues = json_decode($parameters['json']);
+            if ($inputValues) return $inputValues;
+        }
+
+        return (object) $parameters;
+    }
+
+    public function localCall($webServiceName, $inputData, $version)
+    {
+        //Try to lookup The schema
+        try {
+        $schema = $this->lookupLocalWebService($webServiceName, $version);
+        } catch (Exception $e) {
+            return $this->buildErrorResponse($webServiceName, $version, $e);
+        }
+
+        //Cast $inputValue if needed
+        try {
+            $classNames = $schema['definition']['inputClass'];
+            $inputData = StoreHelper::unSerialize($inputData, $classNames,
+                                                  $this->getAnnotationReader());
+        } catch (Exception $e) {
+            return $this->buildErrorResponse($webServiceName, $version, $e);
+        }
+
+        //Validate input value
+        try {
+            $this->checkType($inputData, $schema['definition']['inputType'],
+                             $schema['definition']['inputClass'],
+                             WebServiceException::WS_003);
+        } catch (Exception $e) {
+                return $this->buildErrorResponse($webServiceName, $version, $e);
+        }
+
+        $method = $schema['_internal']['method'];
+        try {
+            $response = $this->container->get($schema['_internal']['id'])->$method($inputData);
+        } catch (Exception $e) {
+            return $this->buildErrorResponse($webServiceName, $version, $e);
+        }
+
+        //Validate the output values
+        try {
+            $this->checkType($response, $schema['definition']['returnType'],
+                             $schema['definition']['returnClass'],
+                             WebServiceException::WS_004);
+        } catch (Exception $e) {
+                return $this->buildErrorResponse($webServiceName, $version, $e);
+        }
+
+        //Everything good ! return the response
+        return $this->buildResponse($webServiceName, $version, $response);
+    }
+
+    private function lookupLocalWebService($webServiceName, $version)
+    {
+        $key = strtolower($webServiceName);
+
+        //Check if the webService Exists
+        if (!array_key_exists($key, $this->webServices)) {
+                throw new WebServiceException("Webservice '$webServiceName' not found",
+                                             WebServiceException::WS_002);
+        }
+
+        //Check if the version exists
+        if (!array_key_exists($version, $this->webServices[$key])) {
+                throw new WebServiceException("version '$version' does not exists for "
+                                             ."webservice '$webServiceName'",
+                                            WebServiceException::WS_002);
+        }
+
+        //Got the schema !!
+        return $this->webServices[$key][$version];
+    }
+}
