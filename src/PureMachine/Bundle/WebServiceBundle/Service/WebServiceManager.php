@@ -45,10 +45,16 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
     public function getSchema($ws)
     {
         if (array_key_exists(strtolower($ws), $this->webServices))
-
             return $this->webServices[strtolower($ws)];
 
         return null;
+    }
+
+    public function getSchemaVersions($ws)
+    {
+        $schemaDef = $this->getSchema($ws);
+
+        return array_values(array_diff(array_keys($schemaDef), array('name')));
     }
 
     public function getSchemas()
@@ -173,7 +179,6 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
         }
 
         if (count($parameters) == 0) return null;
-
         return (object) $parameters;
     }
 
@@ -189,7 +194,7 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
         //Handle special mapping :
         //Simple type are mapped to Store classes
         $inputData = StoreHelper::simpleTypeToStore($inputData);
-        
+
         //Cast $inputValue if needed
         try {
             $classNames = $schema['definition']['inputClass'];
