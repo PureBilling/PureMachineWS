@@ -103,6 +103,7 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
             $definition['inputClass'] = array();
             $definition['returnType'] = 'object';
             $definition['returnClass'] = array();
+            $description = '';
             $internal = array();
             $name = null;
             $version = null;
@@ -121,6 +122,8 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
                 } elseif ($annotation instanceof PM\InputClass) {
                     $definition['inputClass'] = $annotation->getValue();
                     if ($annotation->isArray) $definition['inputType'] = 'array';
+                } elseif ($annotation instanceof PM\Doc) {
+                    $description = $annotation->description;
                 }
             }
 
@@ -136,6 +139,7 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
                 $this->webServices[$key][$version] = array();
                 $this->webServices[$key][$version]['definition'] = $definition;
                 $this->webServices[$key][$version]['_internal'] = $internal;
+                $this->webServices[$key]['description'] = $description;
             }
         }
     }

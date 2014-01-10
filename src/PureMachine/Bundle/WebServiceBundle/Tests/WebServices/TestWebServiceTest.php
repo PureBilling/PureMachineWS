@@ -245,6 +245,7 @@ class TestWebServiceTest extends WebTestCase
     {
         $client = static::createClient();
         $client->request('GET', $url);
+
         $this->assertTrue($client->getResponse()->isSuccessful());
         $rawResponse = $client->getResponse()->getContent();
         $this->assertNotNull($rawResponse);
@@ -262,18 +263,18 @@ class TestWebServiceTest extends WebTestCase
     public function testCallFromUrl()
     {
         //test with a simple get parameter
-        $response = $this->getResponseFromUrl('/ws/V1/PureMachine/Test/StringReturnStore');
+        $response = $this->getResponseFromUrl('/V1/PureMachine/Test/StringReturnStore');
         $this->assertEquals('error', $response->status);
         $this->assertEquals('WS_003', $response->answer->code);
 
-        $response = $this->getResponseFromUrl('/ws/V1/PureMachine/Test/StoreReturnString');
+        $response = $this->getResponseFromUrl('/V1/PureMachine/Test/StoreReturnString');
         $this->assertEquals('error', $response->status);
         $this->assertEquals('WS_003', $response->answer->code);
 
-        $response = $this->getResponseFromUrl('/ws/V1/PureMachine/Test/StringReturnStore?value=test%20Param');
+        $response = $this->getResponseFromUrl('/V1/PureMachine/Test/StringReturnStore?value=test%20Param');
         $this->assertEquals('test Param', $response->answer->testString);
 
-        $response = $this->getResponseFromUrl('/ws/V1/PureMachine/Test/StringReturnStore?json={"value":"test%20Param"}');
+        $response = $this->getResponseFromUrl('/V1/PureMachine/Test/StringReturnStore?json={"value":"test%20Param"}');
         $this->assertEquals('test Param', $response->answer->testString);
     }
 
@@ -286,7 +287,7 @@ class TestWebServiceTest extends WebTestCase
     {
         $this->testCallMethodWithLocalWebServices(WebServiceManagerMock::ALL_REMOTE);
     }
-    
+
     /**
      * @code
      * phpunit -v -c app --filter testStoreAutoMapping vendor/puremachine/ws/src/PureMachine/Bundle/WebServiceBundle/Tests/WebServices/TestWebServiceTest.php
@@ -296,7 +297,7 @@ class TestWebServiceTest extends WebTestCase
     {
         $client = static::createClient();
         $wsM = new WebServiceManagerMock($client->getContainer(), WebServiceManagerMock::ALL_REMOTE);
-        
+
         //Try string autoMapping
         $response = $wsM->call('PureMachine/Test/StringReturnStore',
                                'string Value');

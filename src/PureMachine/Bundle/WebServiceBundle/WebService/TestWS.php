@@ -5,7 +5,6 @@ use JMS\DiExtraBundle\Annotation\Service;
 use JMS\DiExtraBundle\Annotation\Tag;
 
 use PureMachine\Bundle\WebServiceBundle\Service\Annotation as PM;
-use PureMachine\Bundle\WebServiceBundle\WebService\BaseWebService;
 use PureMachine\Bundle\WebServiceBundle\Store\TestStoreA;
 use PureMachine\Bundle\WebServiceBundle\Store\TestStoreB;
 use PureMachine\Bundle\SDKBundle\Store\Base\BaseStore;
