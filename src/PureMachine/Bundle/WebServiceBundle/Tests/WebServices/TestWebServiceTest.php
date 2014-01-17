@@ -56,19 +56,15 @@ class TestWebServiceTest extends WebTestCase
         $this->assertEquals('error', $response->getStatus());
         $this->assertEquals(true, $response->getLocal());
         $this->assertTrue($response->getAnswer() instanceof ExceptionStore);
-
-        if ($callType == WebServiceManagerMock::ALL_REMOTE)
-            $this->assertEquals('HTTP_001', $response->getAnswer()->getCode());
-        else
-            $this->assertEquals('WS_002', $response->getAnswer()->getCode());
+        $this->assertTrue(in_array($response->getAnswer()->getCode(),
+                          array('WS_002', 'HTTP_404')));
 
         //Existing service but with a wrong version
         $response = $wsM->call('PureMachine/Test/NoParamReturnStore', null, 'V999999');
         $this->assertEquals('error', $response->getStatus());
         $this->assertTrue($response->getAnswer() instanceof ExceptionStore);
         if ($callType == WebServiceManagerMock::ALL_REMOTE)
-
-            $this->assertEquals('HTTP_001', $response->getAnswer()->getCode());
+            $this->assertEquals('HTTP_401', $response->getAnswer()->getCode());
         else
             $this->assertEquals('WS_002', $response->getAnswer()->getCode());
 

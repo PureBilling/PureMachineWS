@@ -7,7 +7,7 @@ use PureMachine\Bundle\WebServiceBundle\Service\Annotation as PM;
 class WebServiceManagerMock extends WebServiceClient
 {
     const ALL_LOCAL = 'local';
-    const ALL_REMOTE = 'remove';
+    const ALL_REMOTE = 'remote';
     const DEFAULT_CALL = 'default';
 
     private $callType = null;
