@@ -64,7 +64,7 @@ class TestWebServiceTest extends WebTestCase
         $this->assertEquals('error', $response->getStatus());
         $this->assertTrue($response->getAnswer() instanceof ExceptionStore);
         if ($callType == WebServiceManagerMock::ALL_REMOTE)
-            $this->assertEquals('HTTP_401', $response->getAnswer()->getCode());
+            $this->assertEquals('HTTP_404', $response->getAnswer()->getCode());
         else
             $this->assertEquals('WS_002', $response->getAnswer()->getCode());
 
