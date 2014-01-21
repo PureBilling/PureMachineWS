@@ -38,35 +38,37 @@ class TestWebServiceTest extends WebTestCase
          * Basic local webServices tests
          */
 
-        //Test wrong WebServiceName with no configuration
-        $response = $wsM->call('Wrong/WebServiceName');
-        $this->assertEquals('error', $response->getStatus());
-        $this->assertTrue($response instanceof DebugErrorResponse);
-        $this->assertEquals(true, $response->getLocal());
-        $this->assertTrue($response->getAnswer() instanceof ExceptionStore);
-        if ($callType == WebServiceManagerMock::ALL_REMOTE)
-            $this->assertEquals('WS_005', $response->getAnswer()->getCode());
-        else
-            $this->assertEquals('WS_002', $response->getAnswer()->getCode());
+        if ($local) {
+            //Test wrong WebServiceName with no configuration
+            $response = $wsM->call('Wrong/WebServiceName');
+            $this->assertEquals('error', $response->getStatus());
+            $this->assertTrue($response instanceof DebugErrorResponse);
+            $this->assertEquals(true, $response->getLocal());
+            $this->assertTrue($response->getAnswer() instanceof ExceptionStore);
+            if ($callType == WebServiceManagerMock::ALL_REMOTE)
+                $this->assertEquals('WS_005', $response->getAnswer()->getCode());
+            else
+                $this->assertEquals('WS_002', $response->getAnswer()->getCode());
 
-        $this->assertTrue($response->getAnswer() instanceof ExceptionStore);
+            $this->assertTrue($response->getAnswer() instanceof ExceptionStore);
 
-        //Test wrong WebServiceName with valid namespace but wrong webService
-        $response = $wsM->call('PureMachine/Test/DOESNOTEXISTS');
-        $this->assertEquals('error', $response->getStatus());
-        $this->assertEquals(true, $response->getLocal());
-        $this->assertTrue($response->getAnswer() instanceof ExceptionStore);
-        $this->assertTrue(in_array($response->getAnswer()->getCode(),
-                          array('WS_002', 'HTTP_404')));
+            //Test wrong WebServiceName with valid namespace but wrong webService
+            $response = $wsM->call('PureMachine/Test/DOESNOTEXISTS');
+            $this->assertEquals('error', $response->getStatus());
+            $this->assertEquals(true, $response->getLocal());
+            $this->assertTrue($response->getAnswer() instanceof ExceptionStore);
+            $this->assertTrue(in_array($response->getAnswer()->getCode(),
+                              array('WS_002', 'HTTP_404')));
 
-        //Existing service but with a wrong version
-        $response = $wsM->call('PureMachine/Test/NoParamReturnStore', null, 'V999999');
-        $this->assertEquals('error', $response->getStatus());
-        $this->assertTrue($response->getAnswer() instanceof ExceptionStore);
-        if ($callType == WebServiceManagerMock::ALL_REMOTE)
-            $this->assertEquals('HTTP_404', $response->getAnswer()->getCode());
-        else
-            $this->assertEquals('WS_002', $response->getAnswer()->getCode());
+            //Existing service but with a wrong version
+            $response = $wsM->call('PureMachine/Test/NoParamReturnStore', null, 'V999999');
+            $this->assertEquals('error', $response->getStatus());
+            $this->assertTrue($response->getAnswer() instanceof ExceptionStore);
+            if ($callType == WebServiceManagerMock::ALL_REMOTE)
+                $this->assertEquals('HTTP_404', $response->getAnswer()->getCode());
+            else
+                $this->assertEquals('WS_002', $response->getAnswer()->getCode());
+        }
 
         //Call WebService with default version returing a store
         $response = $wsM->call('PureMachine/Test/NoParamReturnStore');
