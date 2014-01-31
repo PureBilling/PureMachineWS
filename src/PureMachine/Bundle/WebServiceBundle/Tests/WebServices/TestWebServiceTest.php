@@ -261,18 +261,18 @@ class TestWebServiceTest extends WebTestCase
     public function testCallFromUrl()
     {
         //test with a simple get parameter
-        $response = $this->getResponseFromUrl('/V1/PureMachine/Test/StringReturnStore');
+        $response = $this->getResponseFromUrl('/WS/V1/PureMachine/Test/StringReturnStore');
         $this->assertEquals('error', $response->status);
         $this->assertEquals('WS_003', $response->answer->code);
 
-        $response = $this->getResponseFromUrl('/V1/PureMachine/Test/StoreReturnString');
+        $response = $this->getResponseFromUrl('/WS/V1/PureMachine/Test/StoreReturnString');
         $this->assertEquals('error', $response->status);
         $this->assertEquals('WS_003', $response->answer->code);
 
-        $response = $this->getResponseFromUrl('/V1/PureMachine/Test/StringReturnStore?value=test%20Param');
+        $response = $this->getResponseFromUrl('/WS/V1/PureMachine/Test/StringReturnStore?value=test%20Param');
         $this->assertEquals('test Param', $response->answer->testString);
 
-        $response = $this->getResponseFromUrl('/V1/PureMachine/Test/StringReturnStore?json={"value":"test%20Param"}');
+        $response = $this->getResponseFromUrl('/WS/V1/PureMachine/Test/StringReturnStore?json={"value":"test%20Param"}');
         $this->assertEquals('test Param', $response->answer->testString);
     }
 
