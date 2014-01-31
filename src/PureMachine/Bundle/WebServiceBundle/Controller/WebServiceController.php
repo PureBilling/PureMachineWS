@@ -11,7 +11,7 @@ class WebServiceController extends Controller
      * Public route.
      * Only webService defined a public comes here.
      *
-     * @Route("/{version}/{name}", requirements={"name"=".+", "accessLevel"="ws|private"})
+     * @Route("/WS/{version}/{name}", requirements={"name"=".+", "accessLevel"="ws|private"})
      *
      * @param \Symfony\Component\HttpFoundation\Request $request
      */
