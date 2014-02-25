@@ -182,7 +182,7 @@ class TestWebServiceTest extends WebTestCase
         //WebService that allow two type of store as entry parameters
         $data = new \stdClass();
         $data->testString ='CHECK IF STOREB';
-        $data->className = 'PureMachine\Bundle\WebServiceBundle\Store\TestStoreB';
+        $data->_className = 'PureMachine\Bundle\WebServiceBundle\Store\TestStoreB';
         $response = $wsM->call('PureMachine/Test/MultipleStoreReturnString', $data);
         WebServiceException::raiseIfError($response);
         $this->assertEquals('CHECK IF STOREB', $response->getAnswer()->getValue());
@@ -204,11 +204,11 @@ class TestWebServiceTest extends WebTestCase
         $data = array();
         $dataA = new \stdClass();
         $dataA->testString = 'B3';
-        $dataA->className = 'PureMachine\Bundle\WebServiceBundle\Store\TestStoreB';
+        $dataA->_className = 'PureMachine\Bundle\WebServiceBundle\Store\TestStoreB';
         $data[] = $dataA;
         $dataB = new \stdClass();
         $dataB->testString = 'A3';
-        $dataB->className = 'PureMachine\Bundle\WebServiceBundle\Store\TestStoreA';
+        $dataB->_className = 'PureMachine\Bundle\WebServiceBundle\Store\TestStoreA';
         $data[] = $dataB;
         $response = $wsM->call('PureMachine/Test/MultipleStoreMultiTypeReturnString', $data);
         WebServiceException::raiseIfError($response);
