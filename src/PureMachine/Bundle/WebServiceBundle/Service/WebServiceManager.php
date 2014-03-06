@@ -5,6 +5,7 @@ use JMS\DiExtraBundle\Annotation\Service;
 use JMS\DiExtraBundle\Annotation\Inject;
 use JMS\DiExtraBundle\Annotation\InjectParams;
 
+use PureMachine\Bundle\SDKBundle\Store\Base\BaseStore;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -199,10 +200,6 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
 
     public function localCall($webServiceName, $inputData, $version, $triggerEvent=true)
     {
-        //Handle special mapping :
-        //Simple type are mapped to Store classes
-        $inputData = StoreHelper::simpleTypeToStore($inputData);
-
         $response = $this->localCallImplementation($webServiceName, $inputData, $version);
 
         /**
@@ -225,6 +222,10 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
                 $serialized = "LogError: can't serialize answer";
             }
 
+            if ($inputData instanceof BaseStore) {
+                $inputData = $inputData->serialize();
+            }
+
             $event = new WebServiceCalledServerEvent($webServiceName, $inputData, $serialized, $version,
                                                      null, null, true, $statusCode);
             $eventDispatcher = $this->container->get("event_dispatcher");
@@ -236,6 +237,10 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
 
     protected function localCallImplementation($webServiceName, $inputData, $version)
     {
+        //Handle special mapping :
+        //Simple type are mapped to Store classes
+        $inputData = StoreHelper::simpleTypeToStore($inputData);
+
         //Try to lookup The schema
         try {
         $schema = $this->lookupLocalWebService($webServiceName, $version);
