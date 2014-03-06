@@ -171,4 +171,23 @@ class TestWS extends BaseWebService
 
         return $a;
     }
+
+    /**
+     *
+     * @PM\WebService("AliasReturnAlisases")
+     * @PM\InputClass(classes={"PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\AliasStore"})
+     * @PM\ReturnClass(classes={"PureMachine\Bundle\SDKBundle\Tests\Store\StoreClass\AliasStore"})
+     */
+    public function simpleTest11()
+    {
+        $a = array();
+        $store = new TestStoreA();
+        $store->setTestString('simpleTest10 A');
+        $a[] = $store;
+        $store = new TestStoreB();
+        $store->setTestString('simpleTest10 B');
+        $a[] = $store;
+
+        return $a;
+    }
 }

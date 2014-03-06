@@ -10,12 +10,14 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+use PureMachine\Bundle\SDKBundle\Store\WebService\Response as StoreResponse;
 use PureMachine\Bundle\WebServiceBundle\Service\Annotation as PM;
 use PureMachine\Bundle\WebServiceBundle\Exception\WebServiceException;
 use PureMachine\Bundle\SDKBundle\Exception\Exception;
 use PureMachine\Bundle\SDKBundle\Service\WebServiceClient;
 use PureMachine\Bundle\SDKBundle\Store\Base\StoreHelper;
 use PureMachine\Bundle\WebServiceBundle\WebService\BaseWebService;
+use PureMachine\Bundle\WebServiceBundle\Event\WebServiceCalledServerEvent;
 
 /**
  * @Service("pureMachine.sdk.webServiceManager")
@@ -149,14 +151,14 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
     {
         $inputData = $this->RequestToInputParams($request);
 
-        $response = $this->localCall($webServiceName, $inputData, $version);
+        $response = $this->localCall($webServiceName, $inputData, $version, false);
         $response->setLocal(false);
 
         //Serialize output data.
         try {
             $response = StoreHelper::serialize($response);
         } catch (Exception $e) {
-                $response = $this->buildErrorResponse($webServiceName, $version, $e, true);
+                $response = $this->buildErrorResponse($webServiceName, $version, $e, false);
         }
 
         $symfonyResponse = new Response();
@@ -167,6 +169,15 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
 
         $symfonyResponse->headers->set('Content-Type', 'application/json; charset=utf-8');
         $symfonyResponse->setContent(json_encode($response));
+
+        /**
+         * Trigger event
+         */
+        $url = $request->getSchemeAndHttpHost() . $request->getRequestUri();
+        $event = new WebServiceCalledServerEvent($webServiceName, $inputData, $response, $version,
+                                                 $url, $request->getMethod(), false, $symfonyResponse->getStatusCode());
+        $eventDispatcher = $this->container->get("event_dispatcher");
+        $eventDispatcher->dispatch("puremachine.webservice.server.called", $event);
 
         return $symfonyResponse;
     }
@@ -186,7 +197,44 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
         return (object) $parameters;
     }
 
-    public function localCall($webServiceName, $inputData, $version)
+    public function localCall($webServiceName, $inputData, $version, $triggerEvent=true)
+    {
+        //Handle special mapping :
+        //Simple type are mapped to Store classes
+        $inputData = StoreHelper::simpleTypeToStore($inputData);
+
+        $response = $this->localCallImplementation($webServiceName, $inputData, $version);
+
+        /**
+         * Trigger event
+         */
+        if ($triggerEvent) {
+            $statusCode = -1;
+
+            if ($response instanceof StoreResponse) {
+                if ($response->getStatus() == 'success') {
+                    $statusCode = 200;
+                } else {
+                    $statusCode = 500;
+                }
+            }
+            //Serialize output data.
+            try {
+                $serialized = StoreHelper::serialize($response);
+            } catch (Exception $e) {
+                $serialized = "LogError: can't serialize answer";
+            }
+
+            $event = new WebServiceCalledServerEvent($webServiceName, $inputData, $serialized, $version,
+                                                     null, null, true, $statusCode);
+            $eventDispatcher = $this->container->get("event_dispatcher");
+            $eventDispatcher->dispatch("puremachine.webservice.server.called", $event);
+        }
+
+        return $response;
+    }
+
+    protected function localCallImplementation($webServiceName, $inputData, $version)
     {
         //Try to lookup The schema
         try {
@@ -194,10 +242,6 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
         } catch (Exception $e) {
             return $this->buildErrorResponse($webServiceName, $version, $e);
         }
-
-        //Handle special mapping :
-        //Simple type are mapped to Store classes
-        $inputData = StoreHelper::simpleTypeToStore($inputData);
 
         //Cast $inputValue if needed
         try {

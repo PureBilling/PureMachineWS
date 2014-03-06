@@ -295,7 +295,7 @@ class TestWebServiceTest extends WebTestCase
     public function testStoreAutoMapping()
     {
         $this->markTestIncomplete("Certificate issue.");
-        
+
         $client = static::createClient();
         $wsM = new WebServiceManagerMock($client->getContainer(), WebServiceManagerMock::ALL_REMOTE);
 
