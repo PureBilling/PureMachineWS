@@ -28,7 +28,7 @@ class DocumentationManagerTest extends WebTestCase
 
         $answer = $wsManager->call('PureMachine/Doc/WSReference','PureBilling/Charge/Capture');
 
-        print $answer->getAnswer();
+        //FIXME: not finished
     }
 
 }
