@@ -49,7 +49,7 @@ class DocumentationManager implements ContainerAwareInterface
         $ref->setDescription($schema['description']);
 
         //InputTypes
-        $inputTypes = [];
+        $inputTypes = array();
         foreach ($def['inputClass'] as $inputClass) {
             $store = new WSInputOutputValueDoc();
             $store->setType($def['inputType']);
@@ -60,7 +60,7 @@ class DocumentationManager implements ContainerAwareInterface
         $ref->setInputTypes($inputTypes);
 
         //ReturnType
-        $returnTypes = [];
+        $returnTypes = array();
         foreach ($def['returnClass'] as $returnClass) {
             $store = new WSInputOutputValueDoc();
             $store->setType($def['returnType']);
@@ -109,7 +109,7 @@ class DocumentationManager implements ContainerAwareInterface
 
         $storeSchema = $docInstance->getJsonSchema();
 
-        $children = [];
+        $children = array();
         foreach ($storeSchema->definition as $name => $def) {
 
             //Ignore internal properties
@@ -125,7 +125,7 @@ class DocumentationManager implements ContainerAwareInterface
             else {
                 $c = new ObjectPropertyDoc();
 
-                $subChilds = [];
+                $subChilds = array();
                 foreach ($def->storeClasses as $storeClass) {
                     $propertyStore = new StoreDoc();
                     $propertyStore->setType($def->type);
