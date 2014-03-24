@@ -5,7 +5,12 @@ use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use JMS\DiExtraBundle\Annotation\Inject;
 use JMS\DiExtraBundle\Annotation\InjectParams;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use JMS\DiExtraBundle\Annotation\Service;// new Service() // PHP Bug
+
+/**
+ * Needed because there is an annotation Inheritance bug in PHP 5.3.3 (centOS version)
+ */
+use JMS\DiExtraBundle\Annotation\Service;
+use JMS\DiExtraBundle\Annotation\Tag;
 
 class SymfonyBaseWebService extends BaseWebService implements ContainerAwareInterface
 {
@@ -17,6 +22,7 @@ class SymfonyBaseWebService extends BaseWebService implements ContainerAwareInte
          * remote the use class
          */
         new Service();
+        new Tag();
     }
 
     /**
