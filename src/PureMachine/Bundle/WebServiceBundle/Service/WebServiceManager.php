@@ -209,7 +209,12 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
     public function localCall($webServiceName, $inputData, $version, $triggerEvent=true)
     {
         if ($triggerEvent) {
-            $event = new WebServiceCalledServerEvent($webServiceName, $inputData->serialize(), null, $version,
+            if ($inputData instanceof BaseStore) {
+                $intput = $inputData->serialize();
+            } else {
+                $intput = $inputData;
+            }
+            $event = new WebServiceCalledServerEvent($webServiceName, $intput, null, $version,
                 null, null, true, -1);
             $eventDispatcher = $this->container->get("event_dispatcher");
             $eventDispatcher->dispatch("puremachine.webservice.server.calling", $event);
@@ -230,18 +235,14 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
                     $statusCode = 500;
                 }
             }
-            //Serialize output data.
-            try {
-                $serialized = StoreHelper::serialize($response);
-            } catch (Exception $e) {
-                $serialized = "LogError: can't serialize answer";
+
+            if ($response instanceof BaseStore) {
+                $outputData = $response->serialize();
+            } else {
+                $outputData = $response;
             }
 
-            if ($inputData instanceof BaseStore) {
-                $inputData = $inputData->serialize();
-            }
-
-            $event->setOutputData($serialized);
+            $event->setOutputData($outputData);
             $event->setHttpAnswerCode($statusCode);
             $eventDispatcher = $this->container->get("event_dispatcher");
             $eventDispatcher->dispatch("puremachine.webservice.server.called", $event);
