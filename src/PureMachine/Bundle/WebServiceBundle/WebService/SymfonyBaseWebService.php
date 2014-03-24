@@ -22,7 +22,7 @@ class SymfonyBaseWebService extends BaseWebService implements ContainerAwareInte
          * remote the use class
          */
         new Service();
-	new Tag();
+        new Tag();
     }
 
     /**
