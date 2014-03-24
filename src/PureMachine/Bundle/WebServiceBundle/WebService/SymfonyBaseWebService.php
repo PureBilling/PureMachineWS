@@ -9,6 +9,16 @@ use JMS\DiExtraBundle\Annotation\Service;// new Service() // PHP Bug
 
 class SymfonyBaseWebService extends BaseWebService implements ContainerAwareInterface
 {
+    private function neverUsed()
+    {
+        /*
+         * PHP 5.3.3 CentOS bug : some  include are needed for children annotation classes
+         * I create a annotation object for nothing here only to avoid code optimizer to
+         * remote the use class
+         */
+        new Service();
+    }
+
     /**
      * @var ContainerInterface
      */
