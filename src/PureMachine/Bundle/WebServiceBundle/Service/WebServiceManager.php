@@ -152,6 +152,15 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
     {
         $inputData = $this->RequestToInputParams($request);
 
+        /**
+         * Trigger calling event
+         */
+        $url = $request->getSchemeAndHttpHost() . $request->getRequestUri();
+        $event = new WebServiceCalledServerEvent($webServiceName, $inputData, null, $version,
+            $url, $request->getMethod(), false, -1);
+        $eventDispatcher = $this->container->get("event_dispatcher");
+        $eventDispatcher->dispatch("puremachine.webservice.server.calling", $event);
+
         $response = $this->localCall($webServiceName, $inputData, $version, false);
         $response->setLocal(false);
 
@@ -172,11 +181,10 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
         $symfonyResponse->setContent(json_encode($response));
 
         /**
-         * Trigger event
+         * Trigger called event
          */
-        $url = $request->getSchemeAndHttpHost() . $request->getRequestUri();
-        $event = new WebServiceCalledServerEvent($webServiceName, $inputData, $response, $version,
-                                                 $url, $request->getMethod(), false, $symfonyResponse->getStatusCode());
+        $event->setOutputData($response);
+        $event->setHttpAnswerCode($symfonyResponse->getStatusCode());
         $eventDispatcher = $this->container->get("event_dispatcher");
         $eventDispatcher->dispatch("puremachine.webservice.server.called", $event);
 
@@ -200,6 +208,13 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
 
     public function localCall($webServiceName, $inputData, $version, $triggerEvent=true)
     {
+        if ($triggerEvent) {
+            $event = new WebServiceCalledServerEvent($webServiceName, $inputData->serialize(), null, $version,
+                null, null, true, -1);
+            $eventDispatcher = $this->container->get("event_dispatcher");
+            $eventDispatcher->dispatch("puremachine.webservice.server.calling", $event);
+        }
+
         $response = $this->localCallImplementation($webServiceName, $inputData, $version);
 
         /**
@@ -226,8 +241,8 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
                 $inputData = $inputData->serialize();
             }
 
-            $event = new WebServiceCalledServerEvent($webServiceName, $inputData, $serialized, $version,
-                                                     null, null, true, $statusCode);
+            $event->setOutputData($serialized);
+            $event->setHttpAnswerCode($statusCode);
             $eventDispatcher = $this->container->get("event_dispatcher");
             $eventDispatcher->dispatch("puremachine.webservice.server.called", $event);
         }

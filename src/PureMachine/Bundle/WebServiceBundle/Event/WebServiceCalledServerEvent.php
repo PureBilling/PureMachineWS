@@ -52,6 +52,11 @@ class WebServiceCalledServerEvent extends Event
     private $httpAnswerCode;
 
     /**
+     * @var array
+     */
+    private $metadata = array();
+
+    /**
      * Class constructor
      *
      * @param string    $token
@@ -150,5 +155,30 @@ class WebServiceCalledServerEvent extends Event
     public function getHttpAnswerCode()
     {
         return $this->httpAnswerCode;
+    }
+
+    public function setOutputData($response)
+    {
+        $this->outputData = $response;
+    }
+
+    public function setHttpAnswerCode($code)
+    {
+        $this->httpAnswerCode = $code;
+    }
+
+    public function setMetadata($meta)
+    {
+        $this->metadata = $meta;
+    }
+
+    public function setMetadataValue($key, $value)
+    {
+        $this->metadata[$key] = $value;
+    }
+
+    public function getMetadata()
+    {
+        return $this->metadata;
     }
 }
