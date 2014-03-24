@@ -5,6 +5,7 @@ use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use JMS\DiExtraBundle\Annotation\Inject;
 use JMS\DiExtraBundle\Annotation\InjectParams;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use JMS\DiExtraBundle\Annotation\Service;// new Service() // PHP Bug
 
 class SymfonyBaseWebService extends BaseWebService implements ContainerAwareInterface
 {
