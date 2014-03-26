@@ -135,10 +135,16 @@ class DocumentationManager implements ContainerAwareInterface
                 $c->setChildren($subChilds);
             }
 
-            $c->setType($def->type);
             $c->setDescription($def->description);
+            $c->setRecommended($def->recommended);
             $c->setName($name);
             $c->setValidationConstraints($def->validationConstraints);
+
+            if (count($def->storeClasses) > 0 ) {
+                $c->setType($def->type . " or object");
+            } else {
+                $c->setType($def->type);
+            }
 
             //Set required flag
             foreach ($c->getValidationConstraints() as $constraint) {
