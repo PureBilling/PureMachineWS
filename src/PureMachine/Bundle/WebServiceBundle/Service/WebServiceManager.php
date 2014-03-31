@@ -6,8 +6,6 @@ use JMS\DiExtraBundle\Annotation\Inject;
 use JMS\DiExtraBundle\Annotation\InjectParams;
 
 use PureMachine\Bundle\SDKBundle\Store\Base\BaseStore;
-use Symfony\Component\DependencyInjection\ContainerAwareInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -23,7 +21,7 @@ use PureMachine\Bundle\WebServiceBundle\Event\WebServiceCalledServerEvent;
 /**
  * @Service("pureMachine.sdk.webServiceManager")
  */
-class WebServiceManager extends WebServiceClient implements ContainerAwareInterface
+class WebServiceManager extends WebServiceClient
 {
     const ACCESS_LEVEL_PUBLIC = 'public';
     const ACCESS_LEVEL_PRIVATE = 'private';
@@ -40,9 +38,9 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
      *     "container" = @Inject("service_container")
      * })
      */
-    public function setContainer(ContainerInterface $container = null)
+    public function setContainer($container)
     {
-        $this->container = $container;
+        $this->symfonyContainer = $container;
     }
 
     public function getSchema($ws)
@@ -158,7 +156,7 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
         $url = $request->getSchemeAndHttpHost() . $request->getRequestUri();
         $event = new WebServiceCalledServerEvent($webServiceName, $inputData, null, $version,
             $url, $request->getMethod(), false, -1);
-        $eventDispatcher = $this->container->get("event_dispatcher");
+        $eventDispatcher = $this->symfonyContainer->get("event_dispatcher");
         $eventDispatcher->dispatch("puremachine.webservice.server.calling", $event);
 
         $response = $this->localCall($webServiceName, $inputData, $version, false);
@@ -185,7 +183,7 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
          */
         $event->setOutputData($response);
         $event->setHttpAnswerCode($symfonyResponse->getStatusCode());
-        $eventDispatcher = $this->container->get("event_dispatcher");
+        $eventDispatcher = $this->symfonyContainer->get("event_dispatcher");
         $eventDispatcher->dispatch("puremachine.webservice.server.called", $event);
 
         return $symfonyResponse;
@@ -216,7 +214,7 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
             }
             $event = new WebServiceCalledServerEvent($webServiceName, $intput, null, $version,
                 null, null, true, -1);
-            $eventDispatcher = $this->container->get("event_dispatcher");
+            $eventDispatcher = $this->symfonyContainer->get("event_dispatcher");
             $eventDispatcher->dispatch("puremachine.webservice.server.calling", $event);
         }
 
@@ -244,7 +242,7 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
 
             $event->setOutputData($outputData);
             $event->setHttpAnswerCode($statusCode);
-            $eventDispatcher = $this->container->get("event_dispatcher");
+            $eventDispatcher = $this->symfonyContainer->get("event_dispatcher");
             $eventDispatcher->dispatch("puremachine.webservice.server.called", $event);
         }
 
@@ -285,7 +283,7 @@ class WebServiceManager extends WebServiceClient implements ContainerAwareInterf
 
         $method = $schema['_internal']['method'];
         try {
-            $response = $this->container->get($schema['_internal']['id'])->$method($inputData);
+            $response = $this->symfonyContainer->get($schema['_internal']['id'])->$method($inputData);
         } catch (Exception $e) {
             return $this->buildErrorResponse($webServiceName, $version, $e);
         }
