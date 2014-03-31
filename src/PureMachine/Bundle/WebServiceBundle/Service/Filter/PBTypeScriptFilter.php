@@ -74,6 +74,10 @@ class PBTypeScriptFilter extends BaseNodeFilter implements DependencyExtractorIn
         $ref = $loadPath.DIRECTORY_SEPARATOR."references.ts";
         $mtime = 0;
 
+        if (!file_exists($ref)) {
+            return $children;
+        }
+
         foreach ($iterator as $file) {
             $leafs = $factory->createAsset($file->getPathName(), array(), array('root' => $loadPath));
             foreach ($leafs as $leaf) {
