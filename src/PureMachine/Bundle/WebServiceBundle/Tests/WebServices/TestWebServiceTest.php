@@ -40,7 +40,7 @@ class TestWebServiceTest extends WebTestCase
 
         if ($local) {
             //Test wrong WebServiceName with no configuration
-            $response = $wsM->call('Wrong/WebServiceName');
+            $response = $wsM->call('PureMachine/Test/Wrong/WebServiceName');
             $this->assertEquals('error', $response->getStatus());
             $this->assertTrue($response instanceof DebugErrorResponse);
             $this->assertEquals(true, $response->getLocal());

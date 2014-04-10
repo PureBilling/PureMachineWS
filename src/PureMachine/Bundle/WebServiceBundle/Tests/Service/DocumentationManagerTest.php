@@ -23,6 +23,7 @@ class DocumentationManagerTest extends WebTestCase
      */
     public function testWSReference()
     {
+        $this->MarkTestSkipped();
         $symfony = static::createClient();
         $wsManager = $symfony->getContainer()->get('pureMachine.sdk.webServiceManager');
 
