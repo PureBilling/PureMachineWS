@@ -165,7 +165,7 @@ class WebServiceManager extends WebServiceClient
         //Serialize output data.
         try {
             $response = StoreHelper::serialize($response);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
                 $response = $this->buildErrorResponse($webServiceName, $version, $e, false);
         }
 
@@ -258,7 +258,7 @@ class WebServiceManager extends WebServiceClient
         //Try to lookup The schema
         try {
         $schema = $this->lookupLocalWebService($webServiceName, $version);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return $this->buildErrorResponse($webServiceName, $version, $e);
         }
 
@@ -268,7 +268,7 @@ class WebServiceManager extends WebServiceClient
             $inputData = StoreHelper::unSerialize($inputData, $classNames,
                                                   $this->getAnnotationReader(),
                                                   $this->getContainer());
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return $this->buildErrorResponse($webServiceName, $version, $e);
         }
 
@@ -277,14 +277,14 @@ class WebServiceManager extends WebServiceClient
             $this->checkType($inputData, $schema['definition']['inputType'],
                              $schema['definition']['inputClass'],
                              WebServiceException::WS_003);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
                 return $this->buildErrorResponse($webServiceName, $version, $e);
         }
 
         $method = $schema['_internal']['method'];
         try {
             $response = $this->symfonyContainer->get($schema['_internal']['id'])->$method($inputData);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return $this->buildErrorResponse($webServiceName, $version, $e);
         }
 
@@ -293,7 +293,7 @@ class WebServiceManager extends WebServiceClient
             $this->checkType($response, $schema['definition']['returnType'],
                              $schema['definition']['returnClass'],
                              WebServiceException::WS_004);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
                 return $this->buildErrorResponse($webServiceName, $version, $e);
         }
 
