@@ -186,6 +186,11 @@ class WebServiceManager extends WebServiceClient
         $eventDispatcher = $this->symfonyContainer->get("event_dispatcher");
         $eventDispatcher->dispatch("puremachine.webservice.server.called", $event);
 
+        if ($event->getRefreshOutputData()) {
+            $symfonyResponse->setContent(json_encode($event->getOutputData()));
+            $event->setRefreshOutputData(false);
+        }
+
         return $symfonyResponse;
     }
 
@@ -244,6 +249,11 @@ class WebServiceManager extends WebServiceClient
             $event->setHttpAnswerCode($statusCode);
             $eventDispatcher = $this->symfonyContainer->get("event_dispatcher");
             $eventDispatcher->dispatch("puremachine.webservice.server.called", $event);
+
+            if ($event->getRefreshOutputData()) {
+                $response = StoreHelper::unSerialize($event->getOutputData(), array());
+                $event->setRefreshOutputData(false);
+            }
         }
 
         return $response;
