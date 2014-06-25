@@ -169,27 +169,36 @@ class WebServiceManager extends WebServiceClient
                 $response = $this->buildErrorResponse($webServiceName, $version, $e, false);
         }
 
-        $symfonyResponse = new Response();
-
+        $statusCode = 200;
         if ($response->status == 'error' &&
-            $response->answer->code == WebServiceException::WS_002)
-            $symfonyResponse->setStatusCode(404);
-
-        $symfonyResponse->headers->set('Content-Type', 'application/json; charset=utf-8');
-        $symfonyResponse->setContent(json_encode($response));
+            $response->answer->code == WebServiceException::WS_002) {
+            $statusCode = 404;
+        }
 
         /**
          * Trigger called event
          */
         $event->setOutputData($response);
-        $event->setHttpAnswerCode($symfonyResponse->getStatusCode());
+        $event->setHttpAnswerCode($statusCode);
         $eventDispatcher = $this->symfonyContainer->get("event_dispatcher");
         $eventDispatcher->dispatch("puremachine.webservice.server.called", $event);
 
         if ($event->getRefreshOutputData()) {
-            $symfonyResponse->setContent(json_encode($event->getOutputData()));
+            $response = $event->getOutputData();
             $event->setRefreshOutputData(false);
         }
+
+        /**
+         * Set the Error Ticket ID if any
+         */
+        if ($response->status == 'error' && $event->getTicket()) {
+            $response->answer->ticket = $event->getTicket();
+        }
+
+        $symfonyResponse = new Response();
+        $symfonyResponse->headers->set('Content-Type', 'application/json; charset=utf-8');
+        $symfonyResponse->setContent(json_encode($response));
+        $symfonyResponse->setStatusCode($statusCode);
 
         return $symfonyResponse;
     }
@@ -253,6 +262,13 @@ class WebServiceManager extends WebServiceClient
             if ($event->getRefreshOutputData()) {
                 $response = StoreHelper::unSerialize($event->getOutputData(), array());
                 $event->setRefreshOutputData(false);
+            }
+
+            /**
+             * Set the Error Ticket ID if any
+             */
+            if ($response->getStatus() == 'error' && $event->getTicket()) {
+                $response->getAnswer()->setTicket($event->getTicket());
             }
         }
 
