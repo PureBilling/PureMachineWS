@@ -26,8 +26,6 @@ class WebServiceCalledServerEvent extends HttpRequestEvent
      */
     private $local;
 
-    private $refreshOutputData = false;
-
     /**
      * Class constructor
      *
@@ -83,15 +81,4 @@ class WebServiceCalledServerEvent extends HttpRequestEvent
     {
         return $this->local;
     }
-
-    public function setRefreshOutputData($r)
-    {
-        $this->refreshOutputData = $r;
-    }
-
-    public function getRefreshOutputData()
-    {
-        return $this->refreshOutputData;
-    }
-
 }
