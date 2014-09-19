@@ -66,7 +66,6 @@ class WebServiceCalledServerEvent extends HttpRequestEvent
     {
         return $this->webServiceName;
     }
-
     /**
      * Return version
      *

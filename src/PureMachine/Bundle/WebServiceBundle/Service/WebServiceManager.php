@@ -27,6 +27,10 @@ class WebServiceManager extends WebServiceClient
     const ACCESS_LEVEL_PRIVATE = 'private';
 
     protected $webServices = null;
+    protected $trace = false;
+    protected $callStart = 0;
+    protected $traceStack = array();
+    protected $eventMetadata = array();
 
     public function __construct()
     {
@@ -41,6 +45,39 @@ class WebServiceManager extends WebServiceClient
     public function setContainer($container)
     {
         $this->symfonyContainer = $container;
+        if ($container->hasParameter('trace')) {
+            $this->trace = (boolean) $container->getParameter('trace');
+        }
+        else {
+            $this->trace = false;
+        }
+    }
+
+    public function addMetadata($key, $value)
+    {
+        $this->eventMetadata[$key] = $value;
+    }
+
+    public function trace($message, $shift=0)
+    {
+        if (!$this->trace) return;
+
+        $time = number_format(round(microtime(true) - $this->callStart, 3) , 3);
+        $data = array('time' => $time, 'message' => $message);
+
+        /**
+         * get caller
+         */
+        $bt = debug_backtrace(null,5);
+        $caller = $bt[$shift];
+        $data['line'] = $caller['line'];
+        $data['file'] = $caller['file'];
+        $data['class'] = $caller['class'];
+
+        $caller = $bt[$shift+1];
+        $data['function'] = $caller['function'];
+
+        $this->traceStack[] = $data;
     }
 
     public function getSchema($ws)
@@ -148,6 +185,12 @@ class WebServiceManager extends WebServiceClient
     public function route(Request $request, $webServiceName,
                           $version=PM\WebService::DEFAULT_VERSION)
     {
+        $callStart = microtime(true);
+        $this->callStart = $callStart;
+        $this->trackStack = array();
+        $this->eventMetadata = array();
+        $this->trace("start $webServiceName call");
+
         $inputData = $this->RequestToInputParams($request);
 
         /**
@@ -181,8 +224,24 @@ class WebServiceManager extends WebServiceClient
         $event->setOutputData($response);
         $event->setHttpAnswerCode($statusCode);
         $eventDispatcher = $this->symfonyContainer->get("event_dispatcher");
+
+        $symfonyResponse = new Response();
+        $symfonyResponse->headers->set('Content-Type', 'application/json; charset=utf-8');
+        $symfonyResponse->setStatusCode($statusCode);
+
+        //Execution duration
+        $duration = round(microtime(true) - $callStart, 3);
+        $this->trace("end $webServiceName call");
+        $event->mergeMetadata($this->eventMetadata);
+        $event->setMetadataValue('duration', $duration);
+        $event->setMetadataValue('traceStack', $this->traceStack);
+
         $eventDispatcher->dispatch("puremachine.webservice.server.called", $event);
 
+
+        /**
+         * Answer can be modified by listener
+         */
         if ($event->getRefreshOutputData()) {
             $response = $event->getOutputData();
             $event->setRefreshOutputData(false);
@@ -191,14 +250,14 @@ class WebServiceManager extends WebServiceClient
         /**
          * Set the Error Ticket ID if any
          */
-        if ($response->status == 'error' && $event->getTicket()) {
-            $response->answer->ticket = $event->getTicket();
+        if ($event->getTicket()) {
+            if ($response->status == 'error' ) {
+                $response->answer->ticket = $event->getTicket();
+            }
+            $response->ticket = $event->getTicket();
         }
 
-        $symfonyResponse = new Response();
-        $symfonyResponse->headers->set('Content-Type', 'application/json; charset=utf-8');
         $symfonyResponse->setContent(json_encode($response));
-        $symfonyResponse->setStatusCode($statusCode);
 
         return $symfonyResponse;
     }
@@ -221,6 +280,13 @@ class WebServiceManager extends WebServiceClient
     public function localCall($webServiceName, $inputData, $version, $triggerEvent=true)
     {
         if ($triggerEvent) {
+
+            $callStart = microtime(true);
+            $this->callStart = $callStart;
+            $this->trackStack = array();
+            $this->eventMetadata = array();
+            $this->trace("start $webServiceName call");
+
             if ($inputData instanceof BaseStore) {
                 $intput = $inputData->serialize();
             } else {
@@ -257,6 +323,14 @@ class WebServiceManager extends WebServiceClient
             $event->setOutputData($outputData);
             $event->setHttpAnswerCode($statusCode);
             $eventDispatcher = $this->symfonyContainer->get("event_dispatcher");
+
+            $duration = round((microtime(true) - $callStart), 3);
+            $this->trace("end $webServiceName call");
+            $event->mergeMetadata($this->eventMetadata);
+            $event->setMetadataValue('duration', $duration);
+            $event->setMetadataValue('traceStack', $this->traceStack);
+
+
             $eventDispatcher->dispatch("puremachine.webservice.server.called", $event);
 
             if ($event->getRefreshOutputData()) {
@@ -267,8 +341,11 @@ class WebServiceManager extends WebServiceClient
             /**
              * Set the Error Ticket ID if any
              */
-            if ($response->getStatus() == 'error' && $event->getTicket()) {
-                $response->getAnswer()->setTicket($event->getTicket());
+            if ($event->getTicket()) {
+                if ($response->getStatus() == 'error') {
+                    $response->getAnswer()->setTicket($event->getTicket());
+                }
+                $response->setTicket($event->getTicket());
             }
         }
 
