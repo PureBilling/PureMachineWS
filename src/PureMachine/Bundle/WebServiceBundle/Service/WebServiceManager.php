@@ -226,7 +226,6 @@ class WebServiceManager extends WebServiceClient
         $eventDispatcher = $this->symfonyContainer->get("event_dispatcher");
 
         $symfonyResponse = new Response();
-        $symfonyResponse->headers->set('Content-Type', 'application/json; charset=utf-8');
         $symfonyResponse->setStatusCode($statusCode);
 
         //Execution duration
@@ -257,7 +256,16 @@ class WebServiceManager extends WebServiceClient
             $response->ticket = $event->getTicket();
         }
 
-        $symfonyResponse->setContent(json_encode($response));
+        if ($this->getContainer()->get('kernel')->getEnvironment() != 'prod' &&
+            $request->query->has('debug')) {
+
+            $content = "<html><body>" . json_encode($response) ."</body></html>";
+            $symfonyResponse->setContent($content);
+
+        } else {
+            $symfonyResponse->headers->set('Content-Type', 'application/json; charset=utf-8');
+            $symfonyResponse->setContent(json_encode($response));
+        }
 
         return $symfonyResponse;
     }
