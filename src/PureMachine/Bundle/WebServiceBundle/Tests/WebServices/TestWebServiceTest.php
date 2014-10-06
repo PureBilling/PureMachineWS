@@ -278,24 +278,21 @@ class TestWebServiceTest extends WebTestCase
 
     /**
      * @code
-     * phpunit -v -c app --filter testCallMethodWithRemoteWebServices vendor/puremachine/ws/src/PureMachine/Bundle/WebServiceBundle/Tests/WebServices/TestWebServiceTest.php
+     * ./bin/phpunit -v -c app --filter testCallMethodWithRemoteWebServices vendor/puremachine/ws/src/PureMachine/Bundle/WebServiceBundle/Tests/WebServices/TestWebServiceTest.php
      * @endcode
      */
     public function testCallMethodWithRemoteWebServices()
     {
-        $this->markTestIncomplete("Certificate issue.");
         $this->testCallMethodWithLocalWebServices(WebServiceManagerMock::ALL_REMOTE);
     }
 
     /**
      * @code
-     * phpunit -v -c app --filter testStoreAutoMapping vendor/puremachine/ws/src/PureMachine/Bundle/WebServiceBundle/Tests/WebServices/TestWebServiceTest.php
+     * ./bin/phpunit -v -c app --filter testStoreAutoMapping vendor/puremachine/ws/src/PureMachine/Bundle/WebServiceBundle/Tests/WebServices/TestWebServiceTest.php
      * @endcode
      */
     public function testStoreAutoMapping()
     {
-        $this->markTestIncomplete("Certificate issue.");
-
         $client = static::createClient();
         $wsM = new WebServiceManagerMock($client->getContainer(), WebServiceManagerMock::ALL_REMOTE);
 

@@ -141,6 +141,7 @@ class WebServiceManager extends WebServiceClient
             $definition['inputClass'] = array();
             $definition['returnType'] = 'object';
             $definition['returnClass'] = array();
+            $definition['headers'] = array();
             $description = '';
             $internal = array();
             $name = null;
@@ -162,7 +163,14 @@ class WebServiceManager extends WebServiceClient
                     if ($annotation->isArray) $definition['inputType'] = 'array';
                 } elseif ($annotation instanceof PM\Doc) {
                     $description = $annotation->description;
+                }  elseif ($annotation instanceof PM\Headers) {
+                    if (is_array($annotation->value)) {
+                        foreach ($annotation->value as $key => $value) {
+                            $definition['headers'][$key] = $value;
+                        }
+                    }
                 }
+
             }
 
             if (count($definition['returnClass']) == 0)
@@ -267,6 +275,15 @@ class WebServiceManager extends WebServiceClient
             $symfonyResponse->setContent(json_encode($response));
         }
 
+        /**
+         * Add headers if there is any
+         */
+        $schema = $this->getSchema($webServiceName);
+        foreach ($schema[$version]['definition']['headers'] as $key => $value) {
+            $symfonyResponse->headers->set($key, $value);
+        }
+
+        $response->headers->set("Access-Control-Allow-Origin", "*");
         return $symfonyResponse;
     }
 
