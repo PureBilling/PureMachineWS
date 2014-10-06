@@ -283,7 +283,6 @@ class WebServiceManager extends WebServiceClient
             $symfonyResponse->headers->set($key, $value);
         }
 
-        $response->headers->set("Access-Control-Allow-Origin", "*");
         return $symfonyResponse;
     }
 
