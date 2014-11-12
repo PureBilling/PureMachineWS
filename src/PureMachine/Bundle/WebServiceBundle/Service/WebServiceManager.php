@@ -17,6 +17,7 @@ use PureMachine\Bundle\SDKBundle\Service\WebServiceClient;
 use PureMachine\Bundle\SDKBundle\Store\Base\StoreHelper;
 use PureMachine\Bundle\WebServiceBundle\WebService\BaseWebService;
 use PureMachine\Bundle\WebServiceBundle\Event\WebServiceCalledServerEvent;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * @Service("pureMachine.sdk.webServiceManager")
@@ -199,6 +200,11 @@ class WebServiceManager extends WebServiceClient
         $this->eventMetadata = array();
         $this->trace("start $webServiceName call");
 
+        $schema = $this->getSchema($webServiceName);
+        if (!$schema) {
+            throw new NotFoundHttpException("webService $webServiceName not found");
+        }
+
         $inputData = $this->RequestToInputParams($request);
 
         /**
@@ -278,7 +284,6 @@ class WebServiceManager extends WebServiceClient
         /**
          * Add headers if there is any
          */
-        $schema = $this->getSchema($webServiceName);
         foreach ($schema[$version]['definition']['headers'] as $key => $value) {
             $symfonyResponse->headers->set($key, $value);
         }
@@ -288,7 +293,7 @@ class WebServiceManager extends WebServiceClient
 
     private function RequestToInputParams(Request $request)
     {
-        //We get parameters from POST or get
+        //We get parameters from POST or GET
         $parameters = array_merge($request->query->all(), $request->request->all());
 
         //first, we check if we are a object in JSON inside the parameter
@@ -298,6 +303,24 @@ class WebServiceManager extends WebServiceClient
         }
 
         if (count($parameters) == 0) return null;
+
+        /**
+         * Convert string to integer if possible
+         */
+        foreach ($parameters as $key => $value)
+        {
+            if (is_numeric($value)) {
+                $floatValue = floatval($value);
+                $intValue = intval($value);
+
+                if ($intValue == $floatValue) {
+                    $parameters[$key] = $intValue;
+                } else {
+                    $parameters[$key] = $floatValue;
+                }
+            }
+        }
+
         return (object) $parameters;
     }
 
