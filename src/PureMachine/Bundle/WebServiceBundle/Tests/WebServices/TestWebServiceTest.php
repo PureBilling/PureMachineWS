@@ -278,6 +278,30 @@ class TestWebServiceTest extends WebTestCase
 
     /**
      * @code
+     * ./bin/phpunit -v -c app --filter testInternetExplorer8AjaxCall vendor/puremachine/ws/src/PureMachine/Bundle/WebServiceBundle/Tests/WebServices/TestWebServiceTest.php
+     * @endcode
+     *
+     * Internet Explorer send POST data in the request body
+     */
+    public function testInternetExplorer8AjaxCall()
+    {
+        $url = "/WS/V1/PureMachine/Test/StringReturnStore";
+        $data = 'json={"value":"test%20Param"}';
+
+        $client = static::createClient();
+        $client->request('GET', $url, [], [], [], $data);
+
+        $this->assertTrue($client->getResponse()->isSuccessful());
+        $rawResponse = $client->getResponse()->getContent();
+        $this->assertNotNull($rawResponse);
+        $response = json_decode($rawResponse);
+        $this->assertNotNull($response);
+
+        $this->assertEquals('test Param', $response->answer->testString);
+    }
+
+    /**
+     * @code
      * ./bin/phpunit -v -c app --filter testCallMethodWithRemoteWebServices vendor/puremachine/ws/src/PureMachine/Bundle/WebServiceBundle/Tests/WebServices/TestWebServiceTest.php
      * @endcode
      */

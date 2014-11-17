@@ -296,6 +296,15 @@ class WebServiceManager extends WebServiceClient
         //We get parameters from POST or GET
         $parameters = array_merge($request->query->all(), $request->request->all());
 
+        //We merge raw data if there is any
+        //Need for Internet Explorer 8 ajax calls
+        if ($request->getContent()) {
+            parse_str($request->getContent(), $body_data);
+            if (is_array($body_data)) {
+                $parameters = array_merge($parameters, $body_data);
+            }
+        }
+
         //first, we check if we are a object in JSON inside the parameter
         if (array_key_exists('json', $parameters)) {
             $inputValues = json_decode($parameters['json']);
