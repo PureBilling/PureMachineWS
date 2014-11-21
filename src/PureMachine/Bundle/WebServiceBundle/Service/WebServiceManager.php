@@ -1,11 +1,13 @@
 <?php
 namespace PureMachine\Bundle\WebServiceBundle\Service;
 
+use Doctrine\Common\Cache\PhpFileCache;
 use JMS\DiExtraBundle\Annotation\Service;
 use JMS\DiExtraBundle\Annotation\Inject;
 use JMS\DiExtraBundle\Annotation\InjectParams;
 
 use PureMachine\Bundle\SDKBundle\Store\Base\BaseStore;
+use PureMachine\Bundle\StoreBundle\Manager\StoreManager;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -48,8 +50,7 @@ class WebServiceManager extends WebServiceClient
         $this->symfonyContainer = $container;
         if ($container->hasParameter('trace')) {
             $this->trace = (boolean) $container->getParameter('trace');
-        }
-        else {
+        } else {
             $this->trace = false;
         }
     }
@@ -101,6 +102,25 @@ class WebServiceManager extends WebServiceClient
         return $this->webServices;
     }
 
+    public function addServices($serviceIdAndobject)
+    {
+        /**
+         * Check for cache first
+         */
+        $cacheDir = StoreManager::getCacheDirectory();
+        $cache = new PhpFileCache(StoreManager::getCacheDirectory(), ".services-chemas.php");
+        if ($cache->contains("service-schemas")) {
+            $this->webServices = $cache->fetch("service-schemas");
+
+            return;
+        }
+
+        foreach ($serviceIdAndobject as $data) {
+            $this->addService($data['id'], $data['object']);
+        }
+
+        $cache->save("service-schemas", $this->webServices);
+    }
     /**
      * Add a service instance that contains webServices
      *
@@ -164,7 +184,7 @@ class WebServiceManager extends WebServiceClient
                     if ($annotation->isArray) $definition['inputType'] = 'array';
                 } elseif ($annotation instanceof PM\Doc) {
                     $description = $annotation->description;
-                }  elseif ($annotation instanceof PM\Headers) {
+                } elseif ($annotation instanceof PM\Headers) {
                     if (is_array($annotation->value)) {
                         foreach ($annotation->value as $key => $value) {
                             $definition['headers'][$key] = $value;
@@ -251,7 +271,6 @@ class WebServiceManager extends WebServiceClient
 
         $eventDispatcher->dispatch("puremachine.webservice.server.called", $event);
 
-
         /**
          * Answer can be modified by listener
          */
@@ -264,7 +283,7 @@ class WebServiceManager extends WebServiceClient
          * Set the Error Ticket ID if any
          */
         if ($event->getTicket()) {
-            if ($response->status == 'error' ) {
+            if ($response->status == 'error') {
                 $response->answer->ticket = $event->getTicket();
             }
             $response->ticket = $event->getTicket();
@@ -316,8 +335,7 @@ class WebServiceManager extends WebServiceClient
         /**
          * Convert string to integer if possible
          */
-        foreach ($parameters as $key => $value)
-        {
+        foreach ($parameters as $key => $value) {
             if (is_numeric($value)) {
                 $floatValue = floatval($value);
                 $intValue = intval($value);
@@ -385,7 +403,6 @@ class WebServiceManager extends WebServiceClient
             $event->mergeMetadata($this->eventMetadata);
             $event->setMetadataValue('duration', $duration);
             $event->setMetadataValue('traceStack', $this->traceStack);
-
 
             $eventDispatcher->dispatch("puremachine.webservice.server.called", $event);
 

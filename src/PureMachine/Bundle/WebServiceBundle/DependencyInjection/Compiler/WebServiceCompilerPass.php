@@ -18,8 +18,11 @@ class WebServiceCompilerPass implements CompilerPassInterface
 
         $taggedServices = $container->findTaggedServiceIds('puremachine.webservice');
 
+        $data = array();
         foreach ($taggedServices as $id => $attributes) {
-            $definition->addMethodCall('addService', array($id, new Reference($id)));
+            $data[] = array("id" => $id, "object" => new Reference($id));
         }
+
+        $definition->addMethodCall('addServices', array($data));
     }
 }
