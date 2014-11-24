@@ -497,4 +497,18 @@ class WebServiceManager extends WebServiceClient
         //Got the schema !!
         return $this->webServices[$key][$version];
     }
+
+    /**
+     * Adding Application version if defined
+     */
+    protected function buildResponse($webServiceName, $version, $data, $fullUrl=null, $status='success')
+    {
+        $response = parent::buildResponse($webServiceName, $version, $data, $fullUrl, $status);
+
+        if ($this->getContainer()->hasParameter('applicationVersion')) {
+            $response->setApplicationVersion($this->getContainer()->getParameter('applicationVersion'));
+        }
+
+        return $response;
+    }
 }
