@@ -248,7 +248,7 @@ class WebServiceManager extends WebServiceClient
 
         $statusCode = 200;
         if ($response->status == 'error' &&
-            $response->answer->code == WebServiceException::WS_002) {
+            $response->answer->code === WebServiceException::WS_002) {
             $statusCode = 404;
         }
 
