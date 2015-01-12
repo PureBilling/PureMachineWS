@@ -110,7 +110,7 @@ class DocumentationManager implements ContainerAwareInterface
         $storeSchema = $docInstance->getJsonSchema();
 
         $children = array();
-        foreach ($storeSchema->definition as $name => $def) {
+        foreach ($storeSchema["definition"] as $name => $def) {
 
             //Ignore internal properties
             if (substr($name,0,1) == '_') {
@@ -118,7 +118,7 @@ class DocumentationManager implements ContainerAwareInterface
             }
 
             //We have a literal
-            if (count($def->storeClasses) == 0) {
+            if (count($def["storeClasses"]) == 0) {
                 $c = new LiteralPropertyDoc();
             }
             //We have a store
@@ -126,24 +126,24 @@ class DocumentationManager implements ContainerAwareInterface
                 $c = new ObjectPropertyDoc();
 
                 $subChilds = array();
-                foreach ($def->storeClasses as $storeClass) {
+                foreach ($def["storeClasses"] as $storeClass) {
                     $propertyStore = new StoreDoc();
-                    $propertyStore->setType($def->type);
+                    $propertyStore->setType($def["type"]);
                     $propertyStore->setClass($storeClass);
                     $subChilds[] = $this->getStoreDocumentation($propertyStore);
                 }
                 $c->setChildren($subChilds);
             }
 
-            $c->setDescription($def->description);
-            $c->setRecommended($def->recommended);
+            $c->setDescription($def["description"]);
+            $c->setRecommended($def["recommended"]);
             $c->setName($name);
-            $c->setValidationConstraints($def->validationConstraints);
+            $c->setValidationConstraints($def["validationConstraints"]);
 
-            if (count($def->storeClasses) > 0 ) {
-                $c->setType($def->type . " or object");
+            if (count($def["storeClasses"]) > 0 ) {
+                $c->setType($def["type"] . " or object");
             } else {
-                $c->setType($def->type);
+                $c->setType($def["type"]);
             }
 
             //Set required flag
