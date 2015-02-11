@@ -261,18 +261,18 @@ class TestWebServiceTest extends WebTestCase
     public function testCallFromUrl()
     {
         //test with a simple get parameter
-        $response = $this->getResponseFromUrl('/WS/V1/PureMachine/Test/StringReturnStore');
+        $response = $this->getResponseFromUrl('/V1/PureMachine/Test/StringReturnStore');
         $this->assertEquals('error', $response->status);
         $this->assertEquals('WS_003', $response->answer->code);
 
-        $response = $this->getResponseFromUrl('/WS/V1/PureMachine/Test/StoreReturnString');
+        $response = $this->getResponseFromUrl('/V1/PureMachine/Test/StoreReturnString');
         $this->assertEquals('error', $response->status);
         $this->assertEquals('WS_003', $response->answer->code);
 
-        $response = $this->getResponseFromUrl('/WS/V1/PureMachine/Test/StringReturnStore?value=test%20Param');
+        $response = $this->getResponseFromUrl('/V1/PureMachine/Test/StringReturnStore?value=test%20Param');
         $this->assertEquals('test Param', $response->answer->testString);
 
-        $response = $this->getResponseFromUrl('/WS/V1/PureMachine/Test/StringReturnStore?json={"value":"test%20Param"}');
+        $response = $this->getResponseFromUrl('/V1/PureMachine/Test/StringReturnStore?json={"value":"test%20Param"}');
         $this->assertEquals('test Param', $response->answer->testString);
     }
 
@@ -285,7 +285,7 @@ class TestWebServiceTest extends WebTestCase
      */
     public function testInternetExplorer8AjaxCall()
     {
-        $url = "/WS/V1/PureMachine/Test/StringReturnStore";
+        $url = "/V1/PureMachine/Test/StringReturnStore";
         $data = 'json={"value":"test%20Param"}';
 
         $client = static::createClient();
