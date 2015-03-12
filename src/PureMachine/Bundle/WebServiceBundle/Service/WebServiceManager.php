@@ -319,8 +319,14 @@ class WebServiceManager extends WebServiceClient
         //Need for Internet Explorer 8 ajax calls
         if ($request->getContent()) {
             parse_str($request->getContent(), $body_data);
-            if (is_array($body_data)) {
+            if (is_array($body_data) and array_key_exists('json', $body_data)) {
                 $parameters = array_merge($parameters, $body_data);
+            }
+            else {
+                $body_data = json_decode($request->getContent(), true);
+                if (is_array($body_data) && array_key_exists('json', $body_data)) {
+                    $parameters = array_merge($parameters, $body_data);
+                }
             }
         }
 
