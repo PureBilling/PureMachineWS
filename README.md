@@ -6,7 +6,11 @@ Set of tools to use PureMachine and PureBilling webServices, and some http helpe
 
 ### master
 
--- Allow to read raw JSON as input parameters
+- ...
+
+### V2.0.1
+
+- Allow to read raw JSON as input parameters
 
 ### V2.0.0
 

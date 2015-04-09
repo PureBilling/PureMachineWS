@@ -2,7 +2,7 @@
     "name": "puremachine/ws",
     "type": "library",
     "license": "MIT",
-    "description": "PureMachine SDK",
+    "description": "PureMachine WebServices SDK",
     "keywords": ["framework"],
     "autoload": {
         "psr-0": { "PureMachine": "src/" }
