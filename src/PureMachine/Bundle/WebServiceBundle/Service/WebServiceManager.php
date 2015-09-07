@@ -21,6 +21,10 @@ use PureMachine\Bundle\WebServiceBundle\WebService\BaseWebService;
 use PureMachine\Bundle\WebServiceBundle\Event\WebServiceCalledServerEvent;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
+use PureMachine\Bundle\WebServiceBundle\Service\Response\Renderer\IRenderer;
+use PureMachine\Bundle\WebServiceBundle\Service\Response\Renderer\JsonRenderer;
+use PureMachine\Bundle\WebServiceBundle\Service\Response\Renderer\JsonpRenderer;
+
 /**
  * @Service("pureMachine.sdk.webServiceManager")
  */
@@ -34,6 +38,12 @@ class WebServiceManager extends WebServiceClient
     protected $callStart = 0;
     protected $traceStack = array();
     protected $eventMetadata = array();
+    protected $isJsonP = false;
+
+    /**
+     * @var IRenderer
+     */
+    protected $responseRenderer = null;
 
     public function __construct()
     {
@@ -211,6 +221,18 @@ class WebServiceManager extends WebServiceClient
         }
     }
 
+    /**
+     * Creates the response renderer. Its decision is based on the
+     * value of the isJsonP internal class variable.
+     */
+    protected function factoryRenderer()
+    {
+        if ($this->isJsonP) {
+            return new JsonpRenderer();
+        }
+        return new JsonRenderer();
+    }
+
     public function route(Request $request, $webServiceName,
                           $version=PM\WebService::DEFAULT_VERSION)
     {
@@ -226,6 +248,12 @@ class WebServiceManager extends WebServiceClient
         }
 
         $inputData = $this->RequestToInputParams($request);
+
+        //Detecting JSONP
+        $this->isJsonP = $this->isJsonPRequest($request);
+
+        //Create the response renderer
+        $this->responseRenderer = $this->factoryRenderer();
 
         /**
          * Trigger calling event
@@ -292,12 +320,13 @@ class WebServiceManager extends WebServiceClient
         if ($this->getContainer()->get('kernel')->getEnvironment() != 'prod' &&
             $request->query->has('debug')) {
 
-            $content = "<html><body>" . json_encode($response) ."</body></html>";
+            $content = "<html><body>" . $this->responseRenderer->render($webServiceName, $response) ."</body></html>";
             $symfonyResponse->setContent($content);
 
         } else {
-            $symfonyResponse->headers->set('Content-Type', 'application/json; charset=utf-8');
-            $symfonyResponse->setContent(json_encode($response));
+
+            $this->responseRenderer->applyHeaders($symfonyResponse->headers);
+            $symfonyResponse->setContent($this->responseRenderer->render($webServiceName, $response));
         }
 
         /**
@@ -310,7 +339,36 @@ class WebServiceManager extends WebServiceClient
         return $symfonyResponse;
     }
 
-    private function RequestToInputParams(Request $request)
+    /**
+     * Detects if the call if a JSONP call. Force to be only on GET method
+     * Checks if the parameter "jsonp" exists and is a true boolean (or a "true" string
+     * due to issue with casting on parameter conversion)
+     *
+     * @param Request $request
+     * @return bool
+     */
+    private function isJsonPRequest(Request $request)
+    {
+        $method = $request->getMethod();
+        if($method!="GET") return false; //JSONP is forced to be on GET requests only
+        $parameters = $this->findRequestParameters($request);
+
+        if(array_key_exists("jsonp", $parameters)) {
+            $jsonpValue = $parameters["jsonp"];
+            if (($jsonpValue===true) || ($jsonpValue==="true")) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Search the parameters with IE8 compatibility
+     *
+     * @param Request $request
+     */
+    private function findRequestParameters(Request $request)
     {
         //We get parameters from POST or GET
         $parameters = array_merge($request->query->all(), $request->request->all());
@@ -329,6 +387,13 @@ class WebServiceManager extends WebServiceClient
                 }
             }
         }
+
+        return $parameters;
+    }
+
+    private function RequestToInputParams(Request $request)
+    {
+        $parameters = $this->findRequestParameters($request);
 
         //first, we check if we are a object in JSON inside the parameter
         if (array_key_exists('json', $parameters)) {

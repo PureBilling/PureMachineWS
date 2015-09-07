@@ -302,6 +302,177 @@ class TestWebServiceTest extends WebTestCase
 
     /**
      * @code
+     * ./bin/phpunit -v -c app --filter testJSONPOnTestServiceIE8Compatibility vendor/puremachine/ws/src/PureMachine/Bundle/WebServiceBundle/Tests/WebServices/TestWebServiceTest.php
+     * @endcode
+     */
+    public function testJSONPOnTestServiceIE8Compatibility()
+    {
+        $url = "/V1/PureMachine/Test/StringReturnStore";
+        $data = 'json={"value":"test%20Param"}&jsonp=true';
+
+        $client = static::createClient();
+        $client->request('GET', $url, [], [], [], $data);
+
+        $content = $client->getResponse()->getContent();
+
+        $this->assertRegExp("/^purebilling_jsonp\(.*\)\;$/", $content, "Asserting structure of the response, should contain the method 'purebilling_jsonp'");
+        $this->assertRegExp("/^.*\(\'[a-zA-Z\/]+\'.*$/", $content, "Asserting the first parameter of the javascript call if the webservice name");
+        //Extracting the json response to be decoded
+        preg_match("/^.*\(\'[a-zA-Z\/]+\',\'(.*)\'\);$/", $content, $matches);
+
+        /*
+         * Checking response
+         */
+        $this->assertCount(2, $matches);
+        $jsonResponse = json_decode($matches[1], true);
+
+        $this->assertArrayHasKey("webService", $jsonResponse);
+        $this->assertArrayHasKey("version", $jsonResponse);
+        $this->assertArrayHasKey("status", $jsonResponse);
+        $this->assertArrayHasKey("answer", $jsonResponse);
+        $this->assertArrayHasKey("applicationVersion", $jsonResponse);
+
+        $this->assertEquals("success", $jsonResponse["status"]);
+        $this->assertArrayHasKey("testString", $jsonResponse["answer"]);
+        $this->assertEquals("test Param", $jsonResponse["answer"]["testString"]);
+
+        //Checking header application/javascript, not application json
+        $responseHeaders = $client->getResponse()->headers->all();
+        $contentType = $responseHeaders["content-type"][0];
+        $this->assertRegExp("/^application\/javascript.*$/", $contentType);
+        $this->assertRegExp("/^.*charset\=utf\-8.*$/", $contentType);
+
+        /*
+         * Fetching again the same service, without JSONP (with bad value data for jsonp argument) and check content and headers
+         */
+        $url = "/V1/PureMachine/Test/StringReturnStore";
+        $data = 'json={"value":"test%20Param"}&jsonp=1';
+
+        $client = static::createClient();
+        $client->request('GET', $url, [], [], [], $data);
+
+        $content = $client->getResponse()->getContent();
+
+        $this->assertNotRegExp("/^purebilling_jsonp\(.*\)\;$/", $content);
+        $this->assertNotRegExp("/^.*\(\'[a-zA-Z\/]+\'.*$/", $content);
+
+        $responseHeaders = $client->getResponse()->headers->all();
+        $contentType = $responseHeaders["content-type"][0];
+
+        $this->assertRegExp("/^application\/json.*$/", $contentType);
+        $this->assertRegExp("/^.*charset\=utf\-8.*$/", $contentType);
+    }
+
+    public function providerValuesJsonPTestDefaultMode()
+    {
+        return [
+            [true, false],
+            ["true", 1],
+            ["true", "false"],
+            [true, 0],
+        ];
+    }
+
+    /**
+     * @code
+     * ./bin/phpunit -v -c app --filter testJSONPOnTestServiceDefaultMode vendor/puremachine/ws/src/PureMachine/Bundle/WebServiceBundle/Tests/WebServices/TestWebServiceTest.php
+     * @endcode
+     * @dataProvider providerValuesJsonPTestDefaultMode
+     */
+    public function testJSONPOnTestServiceDefaultMode($initialJsonPValue, $finalJsonPValue)
+    {
+        $url = "/V1/PureMachine/Test/StringReturnStore";
+        $data = [
+            "json" => '{"value":"test Param"}',
+            "jsonp" => $initialJsonPValue
+        ];
+
+        $client = static::createClient();
+        $client->request('GET', $url, $data, [], []);
+
+        $content = $client->getResponse()->getContent();
+
+        $this->assertRegExp("/^purebilling_jsonp\(.*\)\;$/", $content, "Asserting structure of the response, should contain the method 'purebilling_jsonp'");
+        $this->assertRegExp("/^.*\(\'[a-zA-Z\/]+\'.*$/", $content, "Asserting the first parameter of the javascript call if the webservice name");
+        //Extracting the json response to be decoded
+        preg_match("/^.*\(\'[a-zA-Z\/]+\',\'(.*)\'\);$/", $content, $matches);
+
+        /*
+         * Checking response
+         */
+        $this->assertCount(2, $matches);
+        $jsonResponse = json_decode($matches[1], true);
+
+        $this->assertArrayHasKey("webService", $jsonResponse);
+        $this->assertArrayHasKey("version", $jsonResponse);
+        $this->assertArrayHasKey("status", $jsonResponse);
+        $this->assertArrayHasKey("answer", $jsonResponse);
+        $this->assertArrayHasKey("applicationVersion", $jsonResponse);
+
+        $this->assertEquals("success", $jsonResponse["status"]);
+        $this->assertArrayHasKey("testString", $jsonResponse["answer"]);
+        $this->assertEquals("test Param", $jsonResponse["answer"]["testString"]);
+
+        //Checking header application/javascript, not application json
+        $responseHeaders = $client->getResponse()->headers->all();
+        $contentType = $responseHeaders["content-type"][0];
+        $this->assertRegExp("/^application\/javascript.*$/", $contentType);
+        $this->assertRegExp("/^.*charset\=utf\-8.*$/", $contentType);
+
+        /*
+         * Fetching again the same service, without JSONP (with bad value data for jsonp argument) and check content and headers
+         */
+        $url = "/V1/PureMachine/Test/StringReturnStore";
+        $data = [
+            "json" => '{"value":"test Param"}',
+            "jsonp" => $finalJsonPValue
+        ];
+
+        $client = static::createClient();
+        $client->request('GET', $url, $data, [], []);
+
+        $content = $client->getResponse()->getContent();
+
+        $this->assertNotRegExp("/^purebilling_jsonp\(.*\)\;$/", $content);
+        $this->assertNotRegExp("/^.*\(\'[a-zA-Z\/]+\'.*$/", $content);
+
+        $responseHeaders = $client->getResponse()->headers->all();
+        $contentType = $responseHeaders["content-type"][0];
+
+        $this->assertRegExp("/^application\/json.*$/", $contentType);
+        $this->assertRegExp("/^.*charset\=utf\-8.*$/", $contentType);
+    }
+
+    /**
+     * @code
+     * ./bin/phpunit -v -c app --filter testForbiddenMethodPOSTJsonP vendor/puremachine/ws/src/PureMachine/Bundle/WebServiceBundle/Tests/WebServices/TestWebServiceTest.php
+     * @endcode
+     */
+    public function testForbiddenMethodPOSTJsonP()
+    {
+        $url = "/V1/PureMachine/Test/StringReturnStore";
+        $data = [
+            "json" => '{"value":"test Param"}',
+            "jsonp" => true
+        ];
+
+        $client = static::createClient();
+        $client->request('POST', $url, $data, [], []);
+
+        $content = $client->getResponse()->getContent();
+
+        $this->assertNotRegExp("/^purebilling_jsonp\(.*\)\;$/", $content);
+        $this->assertNotRegExp("/^.*\(\'[a-zA-Z\/]+\'.*$/", $content);
+
+        $responseHeaders = $client->getResponse()->headers->all();
+        $contentType = $responseHeaders["content-type"][0];
+
+        $this->assertRegExp("/^application\/json.*$/", $contentType);
+        $this->assertRegExp("/^.*charset\=utf\-8.*$/", $contentType);
+    }
+
+    /**
+     * @code
      * ./bin/phpunit -v -c app --filter testCallMethodWithRemoteWebServices vendor/puremachine/ws/src/PureMachine/Bundle/WebServiceBundle/Tests/WebServices/TestWebServiceTest.php
      * @endcode
      */
