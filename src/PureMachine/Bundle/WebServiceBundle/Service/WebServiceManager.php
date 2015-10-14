@@ -262,10 +262,19 @@ class WebServiceManager extends WebServiceClient
         $event = new WebServiceCalledServerEvent($webServiceName, $inputData, null, $version,
             $url, $request->getMethod(), false, -1);
         $eventDispatcher = $this->symfonyContainer->get("event_dispatcher");
-        $eventDispatcher->dispatch("puremachine.webservice.server.calling", $event);
+        $response = null;
 
-        $response = $this->localCall($webServiceName, $inputData, $version, false);
-        $response->setLocal(false);
+        try{
+            $eventDispatcher->dispatch("puremachine.webservice.server.calling", $event);
+        } catch (\Exception $e) {
+            $this->logExceptionToFile($e);
+            $response = $this->buildErrorResponse($webServiceName, $version, $e, false);
+        }
+
+        if (is_null($response)) {
+            $response = $this->localCall($webServiceName, $inputData, $version, false);
+            $response->setLocal(false);
+        }
 
         //Serialize output data.
         try {
@@ -297,7 +306,11 @@ class WebServiceManager extends WebServiceClient
         $event->setMetadataValue('duration', $duration);
         $event->setMetadataValue('traceStack', $this->traceStack);
 
-        $eventDispatcher->dispatch("puremachine.webservice.server.called", $event);
+        try {
+            $eventDispatcher->dispatch("puremachine.webservice.server.called", $event);
+        } catch(\Exception $e) {
+            $this->logExceptionToFile($e);
+        }
 
         /**
          * Answer can be modified by listener
@@ -424,6 +437,8 @@ class WebServiceManager extends WebServiceClient
 
     public function localCall($webServiceName, $inputData, $version, $triggerEvent=true)
     {
+        $response = null;
+
         if ($triggerEvent) {
 
             $callStart = microtime(true);
@@ -440,10 +455,18 @@ class WebServiceManager extends WebServiceClient
             $event = new WebServiceCalledServerEvent($webServiceName, $intput, null, $version,
                 null, null, true, -1);
             $eventDispatcher = $this->symfonyContainer->get("event_dispatcher");
-            $eventDispatcher->dispatch("puremachine.webservice.server.calling", $event);
+
+            try{
+                $eventDispatcher->dispatch("puremachine.webservice.server.calling", $event);
+            } catch (\Exception $e) {
+                $this->logExceptionToFile($e);
+                $response = $this->buildErrorResponse($webServiceName, $version, $e, false);
+            }
         }
 
-        $response = $this->localCallImplementation($webServiceName, $inputData, $version);
+        if (is_null($response)) {
+            $response = $this->localCallImplementation($webServiceName, $inputData, $version);
+        }
 
         /**
          * Trigger event
@@ -475,7 +498,12 @@ class WebServiceManager extends WebServiceClient
             $event->setMetadataValue('duration', $duration);
             $event->setMetadataValue('traceStack', $this->traceStack);
 
-            $eventDispatcher->dispatch("puremachine.webservice.server.called", $event);
+            try {
+                $eventDispatcher->dispatch("puremachine.webservice.server.called", $event);
+            } catch(\Exception $e) {
+                $this->logExceptionToFile($e);
+            }
+
 
             if ($event->getRefreshOutputData()) {
                 $response = StoreHelper::unSerialize($event->getOutputData(), array());
@@ -581,5 +609,12 @@ class WebServiceManager extends WebServiceClient
         }
 
         return $response;
+    }
+
+    public function logExceptionToFile($e)
+    {
+        $message = '"' . $e->getMessage() . '" at ' . $e->getFile() . ":" . $e->getLine();
+        $className = get_class($e);
+        $this->symfonyContainer->get('logger')->critical("logging failed with $className: " . $message);
     }
 }
