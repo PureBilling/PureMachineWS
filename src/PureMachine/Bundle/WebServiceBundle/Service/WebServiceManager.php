@@ -25,9 +25,6 @@ use PureMachine\Bundle\WebServiceBundle\Service\Response\Renderer\IRenderer;
 use PureMachine\Bundle\WebServiceBundle\Service\Response\Renderer\JsonRenderer;
 use PureMachine\Bundle\WebServiceBundle\Service\Response\Renderer\JsonpRenderer;
 
-/**
- * @Service("pureMachine.sdk.webServiceManager")
- */
 class WebServiceManager extends WebServiceClient
 {
     const ACCESS_LEVEL_PUBLIC = 'public';
@@ -117,11 +114,9 @@ class WebServiceManager extends WebServiceClient
         /**
          * Check for cache first
          */
-        $cacheDir = StoreManager::getCacheDirectory();
         $cache = new PhpFileCache(StoreManager::getCacheDirectory(), ".services-chemas.php");
         if ($cache->contains("service-schemas")) {
             $this->webServices = $cache->fetch("service-schemas");
-
             return;
         }
 
@@ -211,7 +206,11 @@ class WebServiceManager extends WebServiceClient
 
             if ($name && $version) {
                 $key = strtolower($name);
-                $this->webServices[$key] = array();
+
+                if (!array_key_exists($key, $this->webServices)) {
+                    $this->webServices[$key] = array();
+                }
+
                 $this->webServices[$key]['name'] = $name;
                 $this->webServices[$key][$version] = array();
                 $this->webServices[$key][$version]['definition'] = $definition;
@@ -273,7 +272,9 @@ class WebServiceManager extends WebServiceClient
 
         if (is_null($response)) {
             $response = $this->localCall($webServiceName, $inputData, $version, false);
-            $response->setLocal(false);
+            if ($response->isStoreProperty('local')) {
+                $response->setLocal(false);
+            }
         }
 
         //Serialize output data.
@@ -345,8 +346,10 @@ class WebServiceManager extends WebServiceClient
         /**
          * Add headers if there is any
          */
-        foreach ($schema[$version]['definition']['headers'] as $key => $value) {
-            $symfonyResponse->headers->set($key, $value);
+        if (array_key_exists($version, $schema)) {
+            foreach ($schema[$version]['definition']['headers'] as $key => $value) {
+                $symfonyResponse->headers->set($key, $value);
+            }
         }
 
         return $symfonyResponse;
@@ -524,11 +527,16 @@ class WebServiceManager extends WebServiceClient
         return $response;
     }
 
+    protected function _simpleTypeToStore($inputData)
+    {
+        return StoreHelper::simpleTypeToStore($inputData);
+    }
+
     protected function localCallImplementation($webServiceName, $inputData, $version)
     {
         //Handle special mapping :
         //Simple type are mapped to Store classes
-        $inputData = StoreHelper::simpleTypeToStore($inputData);
+        $inputData = $this->_simpleTypeToStore($inputData);
 
         //Try to lookup The schema
         try {

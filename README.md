@@ -7,6 +7,7 @@ Set of tools to use PureMachine and PureBilling webServices, and some http helpe
 ### master
 
 - catch events errors
+- WebServiceManager uses services.yml
 
 ### V2.0.1
 

@@ -2,6 +2,7 @@ parameters:
 #    pure_machine_web_service.example.class: PureMachine\Bundle\WebServiceBundle\Example
 
 services:
-#    pure_machine_web_service.example:
-#        class: %pure_machine_web_service.example.class%
-#        arguments: [@service_id, "plain_value", %parameter%]
+    pureMachine.sdk.webServiceManager:
+        class: PureMachine\Bundle\WebServiceBundle\Service\WebServiceManager
+        calls:
+            - [setContainer, [@service_container] ]
