@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 use PureMachine\Bundle\SDKBundle\Store\WebService\Response as StoreResponse;
 use PureMachine\Bundle\WebServiceBundle\Service\Annotation as PM;
 use PureMachine\Bundle\WebServiceBundle\Exception\WebServiceException;
-use PureMachine\Bundle\SDKBundle\Exception\Exception;
+use PureMachine\Bundle\SDKBundle\Exception\Exception as PBException;
 use PureMachine\Bundle\SDKBundle\Service\WebServiceClient;
 use PureMachine\Bundle\SDKBundle\Store\Base\StoreHelper;
 use PureMachine\Bundle\WebServiceBundle\WebService\BaseWebService;
@@ -561,6 +561,9 @@ class WebServiceManager extends WebServiceClient
                              $schema['definition']['inputClass'],
                              WebServiceException::WS_003);
         } catch (\Exception $e) {
+            if ($e instanceof PBException) {
+                $e->setMerchantDetails($e->getMessage());
+            }
                 return $this->buildErrorResponse($webServiceName, $version, $e);
         }
 
