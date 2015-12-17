@@ -279,7 +279,11 @@ class WebServiceManager extends WebServiceClient
 
         //Serialize output data.
         try {
-            $response = StoreHelper::serialize($response);
+            if ($version == 'V3') {
+                $response = StoreHelper::serialize($response, false, false, true, true);
+            } else {
+                $response = StoreHelper::serialize($response);
+            }
         } catch (\Exception $e) {
                 $response = $this->buildErrorResponse($webServiceName, $version, $e, false);
         }
