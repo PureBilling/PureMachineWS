@@ -9,7 +9,7 @@
     },
     "require": {
         "php": ">=5.3.3",
-        "jms/di-extra-bundle": "1.4.*"
+        "jms/di-extra-bundle": "~3.0"
     }
 }
 
