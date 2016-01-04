@@ -21,7 +21,7 @@ class TestWebServiceTest extends WebTestCase
 {
     /**
      * @code
-     * phpunit -v -c app --filter testCallMethodWithLocalWebServices vendor/puremachine/ws/src/PureMachine/Bundle/WebServiceBundle/Tests/WebServices/TestWebServiceTest.php
+     * ./bin/phpunit -v -c app --filter testCallMethodWithLocalWebServices vendor/puremachine/ws/src/PureMachine/Bundle/WebServiceBundle/Tests/WebServices/TestWebServiceTest.php
      * @endcode
      */
     public function testCallMethodWithLocalWebServices($callType=WebServiceManagerMock::ALL_LOCAL)

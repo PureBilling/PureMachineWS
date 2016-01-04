@@ -1,9 +1,6 @@
 <?php
 namespace PureMachine\Bundle\WebServiceBundle\WebService;
 
-use JMS\DiExtraBundle\Annotation\Service;
-use JMS\DiExtraBundle\Annotation\Tag;
-
 use PureMachine\Bundle\WebServiceBundle\Service\Annotation as PM;
 use PureMachine\Bundle\WebServiceBundle\Store\TestStoreA;
 use PureMachine\Bundle\WebServiceBundle\Store\TestStoreB;
@@ -13,8 +10,6 @@ use PureMachine\Bundle\SDKBundle\Store\Type\Boolean;
 use PureMachine\Bundle\WebServiceBundle\Exception\WebServiceException;
 
 /**
- * @Service
- * @Tag("puremachine.webservice")
  * @PM\WSNamespace("PureMachine/Test")
  */
 class TestWS extends BaseWebService

@@ -1,10 +1,6 @@
 <?php
 namespace PureMachine\Bundle\WebServiceBundle\Service;
 
-use JMS\DiExtraBundle\Annotation\Service;
-use JMS\DiExtraBundle\Annotation\Inject;
-use JMS\DiExtraBundle\Annotation\InjectParams;
-
 use PureMachine\Bundle\SDKBundle\Store\Base\BaseStore;
 use PureMachine\Bundle\SDKBundle\Store\WSDoc\LiteralPropertyDoc;
 use PureMachine\Bundle\SDKBundle\Store\WSDoc\ObjectPropertyDoc;
@@ -14,20 +10,10 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use PureMachine\Bundle\SDKBundle\Store\WSDoc\WSReference;
 use PureMachine\Bundle\SDKBundle\Store\WSDoc\StoreDoc;
 
-/**
- * @Service("pure_machine.sdk.documentation_manager")
- */
 class DocumentationManager implements ContainerAwareInterface
 {
     protected $container = null;
 
-    /**
-     * @InjectParams({
-     *     "container" = @Inject("service_container")
-     * })
-     * @param  ContainerInterface $container
-     * @return void
-     */
     public function setContainer(ContainerInterface $container = null)
     {
         $this->container = $container;

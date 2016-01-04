@@ -2,41 +2,16 @@
 namespace PureMachine\Bundle\WebServiceBundle\WebService;
 
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
-use JMS\DiExtraBundle\Annotation\Inject;
-use JMS\DiExtraBundle\Annotation\InjectParams;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
-/**
- * Needed because there is an annotation Inheritance bug in PHP 5.3.3 (centOS version)
- */
-use JMS\DiExtraBundle\Annotation\Service;
-use JMS\DiExtraBundle\Annotation\Tag;
 
 class SymfonyBaseWebService extends BaseWebService implements ContainerAwareInterface
 {
-    private function neverUsed()
-    {
-        /*
-         * PHP 5.3.3 CentOS bug : some  include are needed for children annotation classes
-         * I create a annotation object for nothing here only to avoid code optimizer to
-         * remote the use class
-         */
-        new Service();
-        new Tag();
-    }
-
     /**
      * @var ContainerInterface
      */
     protected $container = null;
 
-    /**
-     * @InjectParams({
-     *     "container" = @Inject("service_container")
-     * })
-     * @param  ContainerInterface $container
-     * @return void
-     */
     public function setContainer(ContainerInterface $container = null)
     {
         $this->container = $container;

@@ -6,3 +6,25 @@ services:
         class: PureMachine\Bundle\WebServiceBundle\Service\WebServiceManager
         calls:
             - [setContainer, [@service_container] ]
+
+    pure_machine.sdk.documentation_manager:
+        class: PureMachine\Bundle\WebServiceBundle\Service\DocumentationManager
+        calls:
+            - [setContainer, [@service_container] ]
+
+    pure_machine.ws.MockedServiceWithoutWebservicePublicMethods:
+        class: PureMachine\Bundle\WebServiceBundle\Tests\Service\Mocks\MockedServiceWithoutWebservicePublicMethods
+        tags:
+            -  { name: puremachine.webservice }
+
+    pure_machine.ws.TestWS:
+        class: PureMachine\Bundle\WebServiceBundle\WebService\TestWS
+        tags:
+            -  { name: puremachine.webservice }
+
+    pure_machine.ws.WSDoc:
+        class: PureMachine\Bundle\WebServiceBundle\WebService\WSDoc
+        calls:
+          - [setContainer, [@service_container] ]
+        tags:
+            -  { name: puremachine.webservice }

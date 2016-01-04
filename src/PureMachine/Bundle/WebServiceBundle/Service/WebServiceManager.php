@@ -2,9 +2,6 @@
 namespace PureMachine\Bundle\WebServiceBundle\Service;
 
 use Doctrine\Common\Cache\PhpFileCache;
-use JMS\DiExtraBundle\Annotation\Service;
-use JMS\DiExtraBundle\Annotation\Inject;
-use JMS\DiExtraBundle\Annotation\InjectParams;
 
 use PureMachine\Bundle\SDKBundle\Store\Base\BaseStore;
 use PureMachine\Bundle\StoreBundle\Manager\StoreManager;
@@ -47,11 +44,6 @@ class WebServiceManager extends WebServiceClient
         $this->webServices = array();
     }
 
-    /**
-     * @InjectParams({
-     *     "container" = @Inject("service_container")
-     * })
-     */
     public function setContainer($container)
     {
         $this->symfonyContainer = $container;

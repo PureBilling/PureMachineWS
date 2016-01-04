@@ -1,14 +1,9 @@
 <?php
 namespace PureMachine\Bundle\WebServiceBundle\WebService;
 
-use JMS\DiExtraBundle\Annotation\Service;
-use JMS\DiExtraBundle\Annotation\Tag;
-
 use PureMachine\Bundle\WebServiceBundle\Service\Annotation as PM;
 
 /**
- * @Service
- * @Tag("puremachine.webservice")
  * @PM\WSNamespace("PureMachine/Doc")
  */
 class WSDoc extends SymfonyBaseWebService
