@@ -394,7 +394,7 @@ class WebServiceManager extends WebServiceClient
             }
             else {
                 $body_data = json_decode($request->getContent(), true);
-                if (is_array($body_data) && array_key_exists('json', $body_data)) {
+                if (is_array($body_data)) {
                     $parameters = array_merge($parameters, $body_data);
                 }
             }
