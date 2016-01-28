@@ -389,11 +389,13 @@ class WebServiceManager extends WebServiceClient
         //Need for Internet Explorer 8 ajax calls
         if ($request->getContent()) {
             parse_str($request->getContent(), $body_data);
-            if (is_array($body_data) && array_key_exists('json', $body_data)) {
+            $firstKey = key($body_data);
+            reset($body_data);
+            if (is_array($body_data) && $body_data[$firstKey] != "") {
                 $parameters = array_merge($parameters, $body_data);
             }
             else {
-                $body_data = json_decode($request->getContent(), true);
+                $body_data = $this->jsonDecode($request->getContent(), true);
                 if (is_array($body_data)) {
                     $parameters = array_merge($parameters, $body_data);
                 }
@@ -403,13 +405,18 @@ class WebServiceManager extends WebServiceClient
         return $parameters;
     }
 
+    protected function jsonDecode($json, $assoc=false)
+    {
+        return json_decode($json, $assoc);
+    }
+
     private function RequestToInputParams(Request $request)
     {
         $parameters = $this->findRequestParameters($request);
 
         //first, we check if we are a object in JSON inside the parameter
         if (array_key_exists('json', $parameters)) {
-            $inputValues = json_decode($parameters['json']);
+            $inputValues = $this->jsonDecode($parameters['json']);
             if ($inputValues) return $inputValues;
         }
 
@@ -558,7 +565,7 @@ class WebServiceManager extends WebServiceClient
                              WebServiceException::WS_003);
         } catch (\Exception $e) {
             if ($e instanceof PBException) {
-                $e->setMerchantDetails($e->getMessage());
+                $this->copyMessageToMerchantMessage($e);
             }
                 return $this->buildErrorResponse($webServiceName, $version, $e);
         }
@@ -581,6 +588,13 @@ class WebServiceManager extends WebServiceClient
 
         //Everything good ! return the response
         return $this->buildResponse($webServiceName, $version, $response);
+    }
+
+    protected function copyMessageToMerchantMessage($e)
+    {
+        if ($e instanceof PBException) {
+            $e->setMerchantDetails($e->getMessage());
+        }
     }
 
     private function lookupLocalWebService($webServiceName, $version)
