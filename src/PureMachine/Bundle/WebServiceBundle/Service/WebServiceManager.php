@@ -232,6 +232,7 @@ class WebServiceManager extends WebServiceClient
         $this->trackStack = array();
         $this->eventMetadata = array();
         $this->trace("start $webServiceName call");
+        $response = null;
 
         $schema = $this->getSchema($webServiceName);
         if (!$schema) {
@@ -246,20 +247,15 @@ class WebServiceManager extends WebServiceClient
         //Create the response renderer
         $this->responseRenderer = $this->factoryRenderer();
 
-        /**
-         * Trigger calling event
-         */
         $url = $request->getSchemeAndHttpHost() . $request->getRequestUri();
-        $event = new WebServiceCalledServerEvent($webServiceName, $inputData, null, $version,
-            $url, $request->getMethod(), false, -1);
-        $eventDispatcher = $this->symfonyContainer->get("event_dispatcher");
-        $response = null;
+        $method = $request->getMethod();
 
         try{
-            $eventDispatcher->dispatch("puremachine.webservice.server.calling", $event);
+            $event = $this->logCalling($webServiceName, $inputData, $version, $url, $method);
         } catch (\Exception $e) {
             $this->logExceptionToFile($e);
             $response = $this->buildErrorResponse($webServiceName, $version, $e, false);
+            $event = null;
         }
 
         if (is_null($response)) {
@@ -269,6 +265,12 @@ class WebServiceManager extends WebServiceClient
             }
         }
 
+        $statusCode = 200;
+        if ($response->getStatus() == 'error' &&
+            $response->getAnswer()->getCode() === WebServiceException::WS_002) {
+            $statusCode = 404;
+        }
+        
         //Serialize output data.
         try {
             if ($version == 'V3') {
@@ -280,25 +282,61 @@ class WebServiceManager extends WebServiceClient
                 $response = $this->buildErrorResponse($webServiceName, $version, $e, false);
         }
 
-        $statusCode = 200;
-        if ($response->status == 'error' &&
-            $response->answer->code === WebServiceException::WS_002) {
-            $statusCode = 404;
-        }
+        $duration = round(microtime(true) - $callStart, 3);
+        $this->trace("end $webServiceName call");
+        $response = $this->logCalled($event, $response, $duration, $statusCode);
 
-        /**
-         * Trigger called event
-         */
-        $event->setOutputData($response);
-        $event->setHttpAnswerCode($statusCode);
-        $eventDispatcher = $this->symfonyContainer->get("event_dispatcher");
 
         $symfonyResponse = new Response();
         $symfonyResponse->setStatusCode($statusCode);
 
-        //Execution duration
-        $duration = round(microtime(true) - $callStart, 3);
-        $this->trace("end $webServiceName call");
+        if ($this->getContainer()->get('kernel')->getEnvironment() != 'prod' &&
+            $request->query->has('debug')) {
+
+            $content = "<html><body>" . $this->responseRenderer->render($webServiceName, $response) ."</body></html>";
+            $symfonyResponse->setContent($content);
+
+        } else {
+
+            $this->responseRenderer->applyHeaders($symfonyResponse->headers);
+            $symfonyResponse->setContent($this->responseRenderer->render($webServiceName, $response));
+        }
+
+        /**
+         * Add headers if there is any
+         */
+        if (array_key_exists($version, $schema)) {
+            foreach ($schema[$version]['definition']['headers'] as $key => $value) {
+                $symfonyResponse->headers->set($key, $value);
+            }
+        }
+
+        return $symfonyResponse;
+    }
+
+    public function logCalling($webServiceName, $inputData, $version, $url, $method)
+    {
+        /**
+         * Trigger calling event
+         */
+        $event = new WebServiceCalledServerEvent($webServiceName, $inputData, null, $version,
+            $url, $method, false, -1);
+        $eventDispatcher = $this->symfonyContainer->get("event_dispatcher");
+        $response = null;
+        $eventDispatcher->dispatch("puremachine.webservice.server.calling", $event);
+
+        return $event;
+    }
+
+    public function logCalled($event, $response, $duration, $httpStatusCode)
+    {
+        /**
+         * Trigger called event
+         */
+        $event->setOutputData($response);
+        $event->setHttpAnswerCode($httpStatusCode);
+        $eventDispatcher = $this->symfonyContainer->get("event_dispatcher");
+
         $event->mergeMetadata($this->eventMetadata);
         $event->setMetadataValue('duration', $duration);
         $event->setMetadataValue('traceStack', $this->traceStack);
@@ -327,28 +365,7 @@ class WebServiceManager extends WebServiceClient
             $response->ticket = $event->getTicket();
         }
 
-        if ($this->getContainer()->get('kernel')->getEnvironment() != 'prod' &&
-            $request->query->has('debug')) {
-
-            $content = "<html><body>" . $this->responseRenderer->render($webServiceName, $response) ."</body></html>";
-            $symfonyResponse->setContent($content);
-
-        } else {
-
-            $this->responseRenderer->applyHeaders($symfonyResponse->headers);
-            $symfonyResponse->setContent($this->responseRenderer->render($webServiceName, $response));
-        }
-
-        /**
-         * Add headers if there is any
-         */
-        if (array_key_exists($version, $schema)) {
-            foreach ($schema[$version]['definition']['headers'] as $key => $value) {
-                $symfonyResponse->headers->set($key, $value);
-            }
-        }
-
-        return $symfonyResponse;
+        return $response;
     }
 
     /**
@@ -621,7 +638,7 @@ class WebServiceManager extends WebServiceClient
     /**
      * Adding Application version if defined
      */
-    protected function buildResponse($webServiceName, $version, $data, $fullUrl=null, $status='success')
+    public function buildResponse($webServiceName, $version, $data, $fullUrl=null, $status='success')
     {
         $response = parent::buildResponse($webServiceName, $version, $data, $fullUrl, $status);
 

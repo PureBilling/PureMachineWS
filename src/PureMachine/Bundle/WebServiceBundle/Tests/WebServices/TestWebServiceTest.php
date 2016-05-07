@@ -72,7 +72,7 @@ class TestWebServiceTest extends WebTestCase
 
         //Call WebService with default version returing a store
         $response = $wsM->call('PureMachine/Test/NoParamReturnStore');
-        WebServiceException::raiseIfError($response, true);
+        WebServiceException::raiseIfError($response);
 
         $this->assertTrue($response->getAnswer() instanceof TestStoreA);
 
@@ -494,7 +494,7 @@ class TestWebServiceTest extends WebTestCase
         //Try string autoMapping
         $response = $wsM->call('PureMachine/Test/StringReturnStore',
                                'string Value');
-        WebServiceException::raiseIfError($response, true);
+        WebServiceException::raiseIfError($response);
         $this->assertEquals('string Value', $response->getAnswer()->getTestString());
 
     }
