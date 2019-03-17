@@ -10,7 +10,7 @@ class WSDoc extends SymfonyBaseWebService
 {
     /**
      * @PM\WebService("WSReference")
-     * @PM\InputClass("PureMachine\Bundle\SDKBundle\Store\Type\String")
+     * @PM\InputClass("PureMachine\Bundle\SDKBundle\Store\Type\PBString")
      * @PM\ReturnClass("PureMachine\Bundle\SDKBundle\Store\WSDoc\WSReference")
      */
     public function wsReferenceV1($wsName)

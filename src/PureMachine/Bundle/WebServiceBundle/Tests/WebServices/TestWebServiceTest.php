@@ -9,7 +9,7 @@ use PureMachine\Bundle\WebServiceBundle\Store\TestStoreA;
 use PureMachine\Bundle\WebServiceBundle\Store\TestStoreB;
 use PureMachine\Bundle\SDKBundle\Store\WebService\Response;
 use PureMachine\Bundle\SDKBundle\Store\WebService\DebugErrorResponse;
-use PureMachine\Bundle\SDKBundle\Store\Type\String;
+use PureMachine\Bundle\SDKBundle\Store\Type\PBString;
 use PureMachine\Bundle\SDKBundle\Store\Type\Boolean;
 
 /**
@@ -88,7 +88,7 @@ class TestWebServiceTest extends WebTestCase
 
         //Call WebService returing the entry value
         $response = $wsM->call('PureMachine/Test/StringReturnStore',
-                               new String('My super Value'));
+                               new PBString('My super Value'));
         WebServiceException::raiseIfError($response);
         $this->assertEquals('My super Value', $response->getAnswer()->getTestString());
 

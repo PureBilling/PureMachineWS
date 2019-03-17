@@ -8,6 +8,7 @@ Set of tools to use PureMachine and PureBilling webServices, and some http helpe
 
 - catch events errors
 - WebServiceManager uses services.yml
+- rename String class to PBString for PHP 7
 
 ### V2.0.1
 

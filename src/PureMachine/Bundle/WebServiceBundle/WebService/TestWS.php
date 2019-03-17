@@ -5,7 +5,7 @@ use PureMachine\Bundle\WebServiceBundle\Service\Annotation as PM;
 use PureMachine\Bundle\WebServiceBundle\Store\TestStoreA;
 use PureMachine\Bundle\WebServiceBundle\Store\TestStoreB;
 use PureMachine\Bundle\SDKBundle\Store\Base\BaseStore;
-use PureMachine\Bundle\SDKBundle\Store\Type\String;
+use PureMachine\Bundle\SDKBundle\Store\Type\PBString;
 use PureMachine\Bundle\SDKBundle\Store\Type\Boolean;
 use PureMachine\Bundle\WebServiceBundle\Exception\WebServiceException;
 
@@ -16,21 +16,21 @@ class TestWS extends BaseWebService
 {
     /**
      * @PM\WebService("NoParamReturnString")
-     * @PM\ReturnClass("PureMachine\Bundle\SDKBundle\Store\Type\String")
+     * @PM\ReturnClass("PureMachine\Bundle\SDKBundle\Store\Type\PBString")
      */
     public function simpleTest($test)
     {
-        return new String('testAnswer');
+        return new PBString('testAnswer');
     }
 
     /**
      * @PM\WebService("CustomNameSpaceWS")
      * @PM\WSNamespace("PureMachine/Test/CustomNameSpace")
-     * @PM\ReturnClass("PureMachine\Bundle\SDKBundle\Store\Type\String")
+     * @PM\ReturnClass("PureMachine\Bundle\SDKBundle\Store\Type\PBString")
      */
     public function customNameSpaceTest()
     {
-        return new String('testAnswer custome namespace');
+        return new PBString('testAnswer custome namespace');
     }
 
     /**
@@ -47,7 +47,7 @@ class TestWS extends BaseWebService
 
     /**
      * @PM\WebService("StringReturnStore")
-     * @PM\InputClass("PureMachine\Bundle\SDKBundle\Store\Type\String")
+     * @PM\InputClass("PureMachine\Bundle\SDKBundle\Store\Type\PBString")
      * @PM\ReturnClass("PureMachine\Bundle\WebServiceBundle\Store\TestStoreA")
      */
     public function simpleTest4(String $value)
@@ -61,33 +61,33 @@ class TestWS extends BaseWebService
     /**
      * @PM\WebService("StoreReturnNoParam")
      * @PM\InputClass("PureMachine\Bundle\WebServiceBundle\Store\TestStoreA")
-     * @PM\ReturnClass("PureMachine\Bundle\SDKBundle\Store\Type\String")
+     * @PM\ReturnClass("PureMachine\Bundle\SDKBundle\Store\Type\PBString")
      */
     public function simpleTest41(TestStoreA $store)
     {
         if (!$store instanceof TestStoreA)
             throw new WebServiceException("should be a TestStoreA (in WS)", WebServiceException::WS_003);
 
-        return new String('here');
+        return new PBString('here');
     }
 
     /**
      * @PM\WebService("StoreReturnString")
      * @PM\InputClass("PureMachine\Bundle\WebServiceBundle\Store\TestStoreA")
-     * @PM\ReturnClass("PureMachine\Bundle\SDKBundle\Store\Type\String")
+     * @PM\ReturnClass("PureMachine\Bundle\SDKBundle\Store\Type\PBString")
      */
     public function simpleTest5(TestStoreA $store)
     {
         if (!$store instanceof TestStoreA)
             throw new WebServiceException("should be a TestStoreA (in WS)", WebServiceException::WS_003);
 
-        return new String($store->getTestString());
+        return new PBString($store->getTestString());
     }
 
     /**
      * @PM\WebService("StoreArrayReturnString")
      * @PM\InputClass("PureMachine\Bundle\WebServiceBundle\Store\TestStoreA", isArray=true)
-     * @PM\ReturnClass("PureMachine\Bundle\SDKBundle\Store\Type\String")
+     * @PM\ReturnClass("PureMachine\Bundle\SDKBundle\Store\Type\PBString")
      */
     public function simpleTest6(array $stores)
     {
@@ -95,13 +95,13 @@ class TestWS extends BaseWebService
             if (!$store instanceof BaseStore)
                 throw new WebServiceException("should be a TestStoreA (in WS), it's a " . get_class($store), WebServiceException::WS_003);
 
-        return new String($stores[1]->getTestString());
+        return new PBString($stores[1]->getTestString());
     }
 
     /**
      * @PM\WebService("MultipleStoreReturnString")
      * @PM\InputClass({"PureMachine\Bundle\WebServiceBundle\Store\TestStoreA", "PureMachine\Bundle\WebServiceBundle\Store\TestStoreB"})
-     * @PM\ReturnClass("PureMachine\Bundle\SDKBundle\Store\Type\String")
+     * @PM\ReturnClass("PureMachine\Bundle\SDKBundle\Store\Type\PBString")
      */
     public function simpleTest7(BaseStore $store)
     {
@@ -114,13 +114,13 @@ class TestWS extends BaseWebService
             throw new WebServiceException("should be a TestStoreB (in WSsimpleTest7 2), but it's a " . get_class($store), WebServiceException::WS_003);
         }
 
-        return new String($value);
+        return new PBString($value);
     }
 
     /**
      * @PM\WebService("MultipleStoreMultiTypeReturnString")
      * @PM\InputClass(classes={"PureMachine\Bundle\WebServiceBundle\Store\TestStoreA", "PureMachine\Bundle\WebServiceBundle\Store\TestStoreB"}, isArray="true")
-     * @PM\ReturnClass("PureMachine\Bundle\SDKBundle\Store\Type\String")
+     * @PM\ReturnClass("PureMachine\Bundle\SDKBundle\Store\Type\PBString")
      */
     public function simpleTest8(array $store)
     {
@@ -132,7 +132,7 @@ class TestWS extends BaseWebService
             throw new WebServiceException("should be a TestStoreB, but it's a " . get_class($store), WebServiceException::WS_003);
         }
 
-        return new String($store[1]->getTestString());
+        return new PBString($store[1]->getTestString());
     }
 
     /**
